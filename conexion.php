@@ -1,7 +1,7 @@
 <?php
 $host = '127.0.0.1';
 $username = 'root';
-$password = '';
+$password = '123456';
 
 try {
     // 1. Conexión a la base de datos operativa (Inventario, Ventas, Compras)
