@@ -62,9 +62,11 @@ try {
         .btn-danger { background-color: #dc3545; color: white; }
         .btn-danger:hover { background-color: #c82333; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <h2>
         📊 Reporte General de Ventas
@@ -113,7 +115,11 @@ try {
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="8" style="text-align: center; color: #777; padding: 25px;">No hay registros de ventas en el sistema.</td>
+                    <td colspan="8" class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h4"/><path d="M8 3v2m8-2v2"/></svg>
+                        <strong>Aún no hay ventas registradas</strong>
+                        <span>Las ventas procesadas en el punto de venta aparecerán en este reporte.</span>
+                    </td>
                 </tr>
             <?php endif; ?>
         </tbody>

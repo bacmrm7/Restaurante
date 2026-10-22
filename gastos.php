@@ -27,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // Eliminar gasto
-if (isset($_GET['eliminar'])) {
-    $id_eliminar = intval($_GET['eliminar']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'], $_POST['id']) && $_POST['accion'] === 'eliminar') {
+    $id_eliminar = intval($_POST['id']);
     try {
         $stmt = $conexion->prepare("DELETE FROM gastos WHERE id = ?");
         $stmt->execute([$id_eliminar]);
@@ -90,9 +90,11 @@ foreach ($gastos as $g) {
         .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
         <h2>💸 Control de Gastos Operativos (Fijos / Variables)</h2>
@@ -178,14 +180,26 @@ foreach ($gastos as $g) {
                                 <td><small style="background: #e9ecef; padding: 3px 8px; border-radius: 4px; font-weight: bold; color: #495057;"><?= ucfirst($gt['frecuencia']) ?></small></td>
                                 <td>$<?= number_format($monto_reg, 2) ?></td>
                                 <td style="color: #dc3545; font-weight: bold;">$<?= number_format($equiv_mensual, 2) ?></td>
-                                <td>
-                                    <a href="gastos.php?eliminar=<?= $gt['id'] ?>" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="return confirm('¿Seguro que deseas eliminar este gasto?');">🗑️</a>
+                                <td class="table-actions-cell">
+                                    <div class="table-actions">
+                                        <form method="POST" action="gastos.php" data-confirm="¿Deseas eliminar este gasto? Esta acción no se puede deshacer.">
+                                            <input type="hidden" name="accion" value="eliminar">
+                                            <input type="hidden" name="id" value="<?= (int) $gt['id'] ?>">
+                                            <button type="submit" class="btn btn-danger" aria-label="Eliminar gasto" title="Eliminar gasto">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" style="text-align: center; color: #777; padding: 20px;">No hay gastos registrados.</td>
+                            <td colspan="6" class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/><path d="M7 3v4m10-4v4"/></svg>
+                                <strong>Aún no hay gastos registrados</strong>
+                                <span>Registra un gasto operativo para consultar su equivalente mensual.</span>
+                            </td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

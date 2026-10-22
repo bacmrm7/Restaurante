@@ -16,6 +16,8 @@
         .btn-secondary { background-color: #6c757d; color: white; }
         .btn-secondary:hover { background-color: #5a6268; }
     </style>
+    <link rel="stylesheet" href="app.css">
+    <script src="app-ui.js" defer></script>
 </head>
 <body>
     <div class='card'>

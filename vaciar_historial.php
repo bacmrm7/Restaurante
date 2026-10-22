@@ -3,6 +3,11 @@ require_once 'seguridad.php';
 requerirRol([1]); // Solo Administrador
 include 'conexion.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: configuracion.php");
+    exit();
+}
+
 try {
     $conexion->beginTransaction();
 

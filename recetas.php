@@ -103,9 +103,11 @@ if ($combo_seleccionado > 0) {
         .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>📖 Ficha Técnica y Recetas (BOM)</h2>
@@ -120,7 +122,11 @@ if ($combo_seleccionado > 0) {
     <?php endif; ?>
 
     <?php if (empty($combos)): ?>
-        <div class="alert-danger">No hay combos o platos registrados en el sistema. Debes crear al menos un combo con el tipo "Combo / Plato Final" en el menú para configurar su receta.</div>
+        <div class="empty-state empty-state-panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5zM4 7.5l8 4.7 8-4.7M12 12.2V21"/><path d="M8 5.2l8 4.6"/></svg>
+            <strong>Aún no hay combos para configurar</strong>
+            <span>Registra un combo o plato desde Menú y combos para preparar su ficha técnica.</span>
+        </div>
     <?php else: ?>
         <!-- Selección del Combo a configurar -->
         <div style="margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 6px;">
@@ -169,7 +175,11 @@ if ($combo_seleccionado > 0) {
             <div class="card">
                 <h3 style="margin-top: 0; color: #333;">📋 Estructura de la Receta</h3>
                 <?php if (empty($ingredientes_receta)): ?>
-                    <p style="color: #666; font-style: italic;">Este combo aún no tiene ingredientes asignados. Agrega insumos desde el formulario de la izquierda.</p>
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h3"/></svg>
+                        <strong>Esta receta aún no tiene ingredientes</strong>
+                        <span>Agrega insumos con sus cantidades desde el formulario de la izquierda.</span>
+                    </div>
                 <?php else: ?>
                     <table>
                         <thead>
@@ -186,12 +196,16 @@ if ($combo_seleccionado > 0) {
                                     <td><strong><?= htmlspecialchars($ing['codigo']) ?></strong></td>
                                     <td><?= htmlspecialchars($ing['insumo_nombre']) ?></td>
                                     <td><strong><?= number_format($ing['cantidad'], 2) ?></strong></td>
-                                    <td>
-                                        <form method="POST" action="recetas.php?combo_id=<?= $combo_seleccionado ?>" style="margin: 0;" onsubmit="return confirm('¿Eliminar este ingrediente de la receta?');">
+                                    <td class="table-actions-cell">
+                                        <div class="table-actions">
+                                        <form method="POST" action="recetas.php?combo_id=<?= $combo_seleccionado ?>" style="margin: 0;" data-confirm="¿Deseas quitar este ingrediente de la receta?">
                                             <input type="hidden" name="accion" value="eliminar">
                                             <input type="hidden" name="receta_id" value="<?= $ing['receta_id'] ?>">
-                                            <button type="submit" class="btn btn-danger">🗑️ Quitar</button>
+                                            <button type="submit" class="btn btn-danger">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>Quitar
+                                            </button>
                                         </form>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

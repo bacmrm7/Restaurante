@@ -69,9 +69,11 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'backup') {$nombre_archivo = "
         .danger-zone h3 { color: #c53030; border-color: #fed7d7; }
         .alert-success { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #c3e6cb; font-weight: bold; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>⚙️ Configuración y Mantenimiento del Sistema</h2>
@@ -130,9 +132,9 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'backup') {$nombre_archivo = "
         <p style="color: #718096; font-size: 14px; margin-top: 0;">
             Esta opción elimina de forma permanente todas las transacciones registradas (entradas/salidas del Kardex, historial de ventas, pagos y cierres de caja). Los productos y recetas registrados permanecerán en el catálogo con stock inicial en 0. Ideal para reiniciar pruebas antes de la defensa.
         </p>
-        <a href="vaciar_historial.php" class="btn btn-danger" onclick="return confirm('¿Estás COMPLETAMENTE SEGURO de vaciar todo el historial de transacciones? Esta acción no se puede deshacer.');">
-            🗑️ Vaciar Historial y Reiniciar Stocks a 0
-        </a>
+        <form method="POST" action="vaciar_historial.php" data-confirm="¿Deseas vaciar todo el historial y reiniciar los stocks? Esta acción no se puede deshacer.">
+            <button type="submit" class="btn btn-danger">🗑️ Vaciar Historial y Reiniciar Stocks a 0</button>
+        </form>
     </div>
 </div>
 

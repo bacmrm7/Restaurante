@@ -48,9 +48,11 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         .alert-success { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
 
     <!-- BARRA SUPERIOR DE NAVEGACIÓN -->

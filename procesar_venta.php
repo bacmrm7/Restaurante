@@ -103,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <html lang="es">
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Venta Exitosa - ERP Hijos del Rey</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -113,8 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .btn { display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
                 .btn:hover { background-color: #0056b3; }
             </style>
+            <link rel="stylesheet" href="app.css">
         </head>
-        <body>
+        <body data-toast-success="Venta procesada correctamente.">
             <div class="card">
                 <h2>¡Venta Procesada con Éxito!</h2>
                 <p>El inventario y el Kardex se han actualizado automáticamente.</p>
@@ -123,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <a href="ventas.php" class="btn">🛒 Realizar Otra Venta</a>
             </div>
+            <script src="app-ui.js" defer></script>
         </body>
         </html>
         <?php
@@ -135,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <html lang="es">
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Error en Venta - ERP Hijos del Rey</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -143,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 p { color: #555; font-size: 14px; margin-bottom: 20px; }
                 .btn { display: inline-block; background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
             </style>
+            <link rel="stylesheet" href="app.css">
         </head>
         <body>
             <div class="card">
@@ -150,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p><?= htmlspecialchars($e->getMessage()) ?></p>
                 <a href="ventas.php" class="btn">Regresar al POS</a>
             </div>
+            <script src="app-ui.js" defer></script>
         </body>
         </html>
         <?php

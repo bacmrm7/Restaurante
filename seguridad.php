@@ -25,6 +25,7 @@ function requerirRol($roles_permitidos = []) {
         <html lang='es'>
         <head>
             <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
             <title>Acceso Restringido - ERP Hijos del Rey</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -38,6 +39,8 @@ function requerirRol($roles_permitidos = []) {
                 .btn-secondary { background-color: #6c757d; color: white; }
                 .btn-secondary:hover { background-color: #5a6268; }
             </style>
+            <link rel='stylesheet' href='app.css'>
+            <script src='app-ui.js' defer></script>
         </head>
         <body>
             <div class='card'>

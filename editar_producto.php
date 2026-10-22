@@ -132,9 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-danger:hover { background-color: #bd2130; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <h2>✏️ Editar / Reabastecer Producto</h2>
 
@@ -146,6 +148,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Tipo de Registro: <?= $p['es_combo'] == 1 ? '🍗 Combo / Plato Final (Menú)' : '📦 Insumo / Materia Prima (Almacén)' ?>
     </div>
 
+    <form id="delete-product-form" method="POST" action="eliminar_producto.php" data-confirm="¿Deseas eliminar este producto? Esta acción no se puede deshacer.">
+        <input type="hidden" name="id" value="<?= (int) $id_producto ?>">
+    </form>
     <form action="editar_producto.php?id=<?= $id_producto ?>" method="POST">
         
         <div class="form-group">
@@ -196,9 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="btn-container">
-            <a href="eliminar_producto.php?id=<?= $id_producto ?>" class="btn btn-danger" onclick="return confirm('⚠️ ¿Estás seguro de que deseas eliminar este producto permanentemente del sistema?');">
-                🗑️ Eliminar
-            </a>
+            <button type="submit" form="delete-product-form" class="btn btn-danger">🗑️ Eliminar</button>
             <div class="btn-group-right">
                 <a href="<?= $p['es_combo'] == 1 ? 'menu.php' : 'index.php' ?>" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>

@@ -315,13 +315,19 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
         .tag-dif-ok { color: #28a745; font-weight: bold; }
         .tag-dif-bad { color: #dc3545; font-weight: bold; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>📊 Cierre de Caja y Control Financiero</h2>
-        <a href="index.php" class="btn">← Volver al Inventario</a>
+        <nav class="quick-nav" aria-label="Accesos rápidos">
+            <a href="reporte_ventas.php" class="btn btn-secondary">Tickets</a>
+            <a href="ventas.php" class="btn btn-secondary">Punto de Venta</a>
+            <a href="<?= $es_admin ? 'index.php' : 'ventas.php' ?>" class="btn btn-primary">Volver</a>
+        </nav>
     </div>
 
     <?php if ($mensaje): ?>
@@ -579,17 +585,23 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
                                     <span class="tag-dif-bad">-$<?= number_format(abs($c['diferencia']), 2) ?> (Faltante)</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
-                                <a href="cierre_caja.php?modo=dia&fecha=<?= $c['fecha'] ?>" class="btn" style="padding: 4px 8px; font-size: 12px; background: #007bff;">👁️ Ver Día</a>
+                            <td class="table-actions-cell">
+                                <div class="table-actions">
+                                    <a href="cierre_caja.php?modo=dia&fecha=<?= $c['fecha'] ?>" class="btn" aria-label="Ver cierre del día" title="Ver cierre del día">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Ver Día
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>
-            <p style="text-align: center; color: #777; padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                Aún no hay cierres auditados guardados en la base de datos.
-            </p>
+            <div class="empty-state empty-state-panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h4"/><path d="M8 3v2m8-2v2"/></svg>
+                <strong>Aún no hay cierres registrados</strong>
+                <span>Completa el arqueo diario y guarda el cierre para verlo en este historial.</span>
+            </div>
         <?php endif; ?>
     </div>
 

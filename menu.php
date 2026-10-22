@@ -35,9 +35,11 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         tr:hover { background-color: #f1f1f1; }
         .text-center { text-align: center; }
     </style>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
         <h2>🍗 Menú de Combos (Venta al Público)</h2>
@@ -69,15 +71,28 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td><?= htmlspecialchars($cb['categoria_nombre'] ?? 'Sin Categoría') ?></td>
                         <td><strong style="color: #28a745; font-size: 16px;">$<?= number_format($cb['precio_venta'], 2) ?></strong></td>
                         <td><small style="color: #666;"><?= htmlspecialchars($cb['descripcion']) ?></small></td>
-                        <td>
-                            <a href="editar_producto.php?id=<?= $cb['id'] ?>" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">✏️ Editar</a>
-                            <a href="eliminar_producto.php?id=<?= $cb['id'] ?>" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('¿Seguro que deseas eliminar este combo?');">🗑️ Eliminar</a>
+                        <td class="table-actions-cell">
+                            <div class="table-actions">
+                                <a href="editar_producto.php?id=<?= $cb['id'] ?>" class="btn btn-sm btn-primary">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 5 4 4M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16z"/></svg>Editar
+                                </a>
+                                <form method="POST" action="eliminar_producto.php" data-confirm="¿Deseas eliminar este combo? Esta acción no se puede deshacer.">
+                                    <input type="hidden" name="id" value="<?= (int) $cb['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>Eliminar
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="6" class="text-center" style="padding: 20px; color: #777;">No hay combos o platos registrados en el menú todavía.</td>
+                    <td colspan="6" class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5zM4 7.5l8 4.7 8-4.7M12 12.2V21"/><path d="M8 5.2l8 4.6"/></svg>
+                        <strong>Aún no hay combos registrados</strong>
+                        <span>Crea un combo o plato para empezar a vender desde el punto de venta.</span>
+                    </td>
                 </tr>
             <?php endif; ?>
         </tbody>

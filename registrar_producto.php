@@ -73,6 +73,7 @@ try {
         .tipo-box { background-color: #e9ecef; padding: 15px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 15px; }
         .oculto { display: none; }
     </style>
+    <link rel="stylesheet" href="app.css">
     <script>
         function alternarCampos() {
             var tipo = document.getElementById('es_combo').value;
@@ -91,6 +92,7 @@ try {
 </head>
 <body onload="alternarCampos()">
 
+<?php include 'navegacion.php'; ?>
 <div class="container">
     <h2>Registrar Nuevo Producto</h2>
 

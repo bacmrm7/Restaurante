@@ -3,8 +3,8 @@ require_once 'seguridad.php';
 requerirRol([1]); // Solo Administrador
 include 'conexion.php';
 
-if (isset($_GET['id'])) {
-    $id = intval($_GET['id']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
+    $id = intval($_POST['id']);
     
     try {
         $conexion->beginTransaction();
