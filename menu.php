@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 // Consultar únicamente los productos que son combos/platos del menú (es_combo = 1)
 $sql = "SELECT p.*, c.nombre AS categoria_nombre 
@@ -35,23 +35,31 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         tr:hover { background-color: #f1f1f1; }
         .text-center { text-align: center; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/table-search.js" defer></script>
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
         <h2>🍗 Menú de Combos (Venta al Público)</h2>
-        <a href="index.php" class="btn btn-secondary">← Volver al Inventario</a>
+        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <a href="registrar_producto.php" class="btn btn-success">+ Nuevo Combo / Plato</a>
-        <a href="recetas.php" class="btn" style="background-color: #17a2b8;">📖 Configurar Recetas (BOM)</a>
+        <a href="registrar_producto.php" class="btn btn-success" title="Registrar un nuevo combo o plato">+ Nuevo Combo / Plato</a>
+        <a href="recetas.php" class="btn" style="background-color: #17a2b8;" title="Ver y configurar las recetas de los combos">📖 Configurar Recetas (BOM)</a>
     </div>
 
-    <table>
+    <div class="table-tools">
+        <label class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+            <input type="search" data-table-search="#menu-table" placeholder="Buscar en menú y combos..." aria-label="Buscar en menú y combos">
+        </label>
+        <span class="table-search-status" aria-live="polite"></span>
+    </div>
+    <table id="menu-table">
         <thead>
             <tr>
                 <th>Código</th>
@@ -73,12 +81,12 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td><small style="color: #666;"><?= htmlspecialchars($cb['descripcion']) ?></small></td>
                         <td class="table-actions-cell">
                             <div class="table-actions">
-                                <a href="editar_producto.php?id=<?= $cb['id'] ?>" class="btn btn-sm btn-primary">
+                                <a href="editar_producto.php?id=<?= $cb['id'] ?>" class="btn btn-sm btn-primary" title="Editar este combo o plato">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 5 4 4M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16z"/></svg>Editar
                                 </a>
-                                <form method="POST" action="eliminar_producto.php" data-confirm="¿Deseas eliminar este combo? Esta acción no se puede deshacer.">
+                                <form method="POST" action="controllers/eliminar_producto.php" data-confirm="¿Deseas eliminar este combo? Esta acción no se puede deshacer.">
                                     <input type="hidden" name="id" value="<?= (int) $cb['id'] ?>">
-                                    <button type="submit" class="btn btn-sm btn-danger">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Eliminar este combo o plato">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>Eliminar
                                     </button>
                                 </form>

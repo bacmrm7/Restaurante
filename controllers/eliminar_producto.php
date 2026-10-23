@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/../includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/../config/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $id = intval($_POST['id']);
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
         $conexion->exec("SET FOREIGN_KEY_CHECKS = 1");
 
         $conexion->commit();
-        header("Location: index.php?msg=eliminado");
+        header("Location: ../index.php?msg=eliminado");
         exit();
 
     } catch (Exception $e) {
@@ -37,12 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
         echo "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f8d7da; color: #721c24; border-radius: 6px;'>";
         echo "<h3>❌ Error al eliminar el producto:</h3>";
         echo "<p style='font-size: 14px;'>" . htmlspecialchars($e->getMessage()) . "</p>";
-        echo "<a href='index.php' style='display: inline-block; background: #6c757d; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 15px;'>← Regresar al Inventario</a>";
+        echo "<a href='../index.php' style='display: inline-block; background: #6c757d; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 15px;'>← Regresar al Inventario</a>";
         echo "</div>";
         exit();
     }
 } else {
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit();
 }
 ?>

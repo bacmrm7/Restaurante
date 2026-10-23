@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/../includes/seguridad.php';
 requerirRol([1, 2]); // Admin y Cajero
-require_once 'conexion.php';
+require_once __DIR__ . '/../config/conexion.php';
 
 // Asegurar compatibilidad con la variable de conexión existente
 if (!isset($pdo)) {
@@ -35,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Preparar consultas optimizadas para el ciclo
         $stmtDetalle = $pdo->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
-        // CORREGIDO: Se usa 'combo_id' en lugar de 'producto_padre_id' para sincronizar con recetas.php
-        $stmtReceta = $pdo->prepare("SELECT insumo_id, cantidad FROM recetas WHERE combo_id = ?");
-        $stmtStockActual = $pdo->prepare("SELECT stock_actual FROM productos WHERE id = ?");
+        $stmtProducto = $pdo->prepare("SELECT id, es_combo FROM productos WHERE id = ?");
+        $stmtReceta = $pdo->prepare("SELECT p.id AS producto_id, r.cantidad FROM recetas r INNER JOIN productos p ON p.id = r.insumo_id WHERE r.combo_id = ? AND p.es_combo = 0");
+        $stmtStockActual = $pdo->prepare("SELECT stock_actual FROM productos WHERE id = ? FOR UPDATE");
         $stmtDescuento = $pdo->prepare("UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?");
         
         // Registro en Kardex (Movimientos)
@@ -45,7 +45,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 3. Procesar Productos, Combos e Inventario en Tiempo Real
         foreach ($items as $item) {
-            $producto_id = $item['producto_id'];
+            $producto_id = filter_var($item['producto_id'] ?? null, FILTER_VALIDATE_INT);
+            if ($producto_id === false || $producto_id <= 0) {
+                throw new RuntimeException('El producto seleccionado no es válido.');
+            }
+
+            $stmtProducto->execute([$producto_id]);
+            $producto = $stmtProducto->fetch(PDO::FETCH_ASSOC);
+            if (!$producto) {
+                throw new RuntimeException('El producto seleccionado ya no existe en el inventario.');
+            }
+            $producto_id = (int) $producto['id'];
             $cant_vendida = $item['cantidad'];
             $precio_unitario = $item['precio_unitario'];
             
@@ -61,12 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (count($ingredientes) > 0) {
                 // ES UN COMBO: Descontar materias primas / insumos asociados según el BOM
                 foreach ($ingredientes as $ing) {
-                    $insumo_id = $ing['insumo_id'];
+                    $insumo_id = (int) $ing['producto_id'];
                     $cant_a_descontar = $ing['cantidad'] * $cant_vendida;
 
                     // Consultar stock previo del insumo
                     $stmtStockActual->execute([$insumo_id]);
-                    $stock_anterior = (float)$stmtStockActual->fetchColumn();
+                    $stock_anterior = $stmtStockActual->fetchColumn();
+                    if ($stock_anterior === false) {
+                        throw new RuntimeException('Un insumo de la receta ya no existe en el inventario.');
+                    }
+                    $stock_anterior = (float) $stock_anterior;
                     
                     // CORREGIDO: Operador de resta aplicado correctamente
                     $stock_nuevo = $stock_anterior - $cant_a_descontar;
@@ -79,9 +93,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtKardex->execute([$insumo_id, $cant_a_descontar, $stock_anterior, $stock_nuevo, $motivo, $usuario_id]);
                 }
             } else {
+                if ((int) $producto['es_combo'] === 1) {
+                    throw new RuntimeException('No se puede procesar este combo porque no tiene insumos válidos configurados en su receta.');
+                }
+
                 // VENTA DIRECTA (Productos individuales, bebidas, etc.)
                 $stmtStockActual->execute([$producto_id]);
-                $stock_anterior = (float)$stmtStockActual->fetchColumn();
+                $stock_anterior = $stmtStockActual->fetchColumn();
+                if ($stock_anterior === false) {
+                    throw new RuntimeException('El producto seleccionado ya no existe en el inventario.');
+                }
+                $stock_anterior = (float) $stock_anterior;
                 
                 // CORREGIDO: Operador de resta aplicado correctamente
                 $stock_nuevo = $stock_anterior - $cant_vendida;
@@ -114,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .btn { display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
                 .btn:hover { background-color: #0056b3; }
             </style>
-            <link rel="stylesheet" href="app.css">
+            <link rel="stylesheet" href="../assets/app.css">
         </head>
         <body data-toast-success="Venta procesada correctamente.">
             <div class="card">
@@ -123,9 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="factura-box">
                     Nro. de Factura: <?= htmlspecialchars($codigo_factura) ?>
                 </div>
-                <a href="ventas.php" class="btn">🛒 Realizar Otra Venta</a>
+                <a href="../ventas.php" class="btn">🛒 Realizar Otra Venta</a>
             </div>
-            <script src="app-ui.js" defer></script>
+            <script src="../assets/app-ui.js" defer></script>
         </body>
         </html>
         <?php
@@ -147,15 +169,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 p { color: #555; font-size: 14px; margin-bottom: 20px; }
                 .btn { display: inline-block; background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
             </style>
-            <link rel="stylesheet" href="app.css">
+            <link rel="stylesheet" href="../assets/app.css">
         </head>
         <body>
             <div class="card">
                 <h2>¡Error al Procesar!</h2>
                 <p><?= htmlspecialchars($e->getMessage()) ?></p>
-                <a href="ventas.php" class="btn">Regresar al POS</a>
+                <a href="../ventas.php" class="btn">Regresar al POS</a>
             </div>
-            <script src="app-ui.js" defer></script>
+            <script src="../assets/app-ui.js" defer></script>
         </body>
         </html>
         <?php

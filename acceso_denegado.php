@@ -16,8 +16,8 @@
         .btn-secondary { background-color: #6c757d; color: white; }
         .btn-secondary:hover { background-color: #5a6268; }
     </style>
-    <link rel="stylesheet" href="app.css">
-    <script src="app-ui.js" defer></script>
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
 <body>
     <div class='card'>
@@ -25,7 +25,7 @@
         <p>Tu rol de usuario no tiene los privilegios necesarios para acceder a este módulo del sistema de <strong>Hijos del Rey</strong>.</p>
         <div class="actions">
             <a href='ventas.php' class='btn btn-primary'>💳 Ir al Módulo POS</a>
-            <a href='logout.php' class='btn btn-secondary'>🚪 Cerrar Sesión</a>
+            <a href='controllers/logout.php' class='btn btn-secondary'>🚪 Cerrar Sesión</a>
         </div>
     </div>
 </body>

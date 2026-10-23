@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 $mensaje = '';
 $error = '';
@@ -132,11 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-danger:hover { background-color: #bd2130; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <h2>✏️ Editar / Reabastecer Producto</h2>
 
@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Tipo de Registro: <?= $p['es_combo'] == 1 ? '🍗 Combo / Plato Final (Menú)' : '📦 Insumo / Materia Prima (Almacén)' ?>
     </div>
 
-    <form id="delete-product-form" method="POST" action="eliminar_producto.php" data-confirm="¿Deseas eliminar este producto? Esta acción no se puede deshacer.">
+    <form id="delete-product-form" method="POST" action="controllers/eliminar_producto.php" data-confirm="¿Deseas eliminar este producto? Esta acción no se puede deshacer.">
         <input type="hidden" name="id" value="<?= (int) $id_producto ?>">
     </form>
     <form action="editar_producto.php?id=<?= $id_producto ?>" method="POST">
@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="btn-container">
-            <button type="submit" form="delete-product-form" class="btn btn-danger">🗑️ Eliminar</button>
+            <button type="submit" form="delete-product-form" class="btn btn-danger" title="Eliminar este producto del inventario">🗑️ Eliminar</button>
             <div class="btn-group-right">
                 <a href="<?= $p['es_combo'] == 1 ? 'menu.php' : 'index.php' ?>" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>

@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2]); // Permitir Administrador (1) y Cajero (2)
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 $mensaje = "";
 $error = "";
@@ -315,11 +315,11 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
         .tag-dif-ok { color: #28a745; font-weight: bold; }
         .tag-dif-bad { color: #dc3545; font-weight: bold; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>📊 Cierre de Caja y Control Financiero</h2>

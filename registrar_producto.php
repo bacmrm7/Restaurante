@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 // Si se envió el formulario para guardar el producto
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -73,7 +73,7 @@ try {
         .tipo-box { background-color: #e9ecef; padding: 15px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 15px; }
         .oculto { display: none; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
     <script>
         function alternarCampos() {
             var tipo = document.getElementById('es_combo').value;
@@ -92,7 +92,7 @@ try {
 </head>
 <body onload="alternarCampos()">
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <h2>Registrar Nuevo Producto</h2>
 

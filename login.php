@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'conexion.php';
+require_once __DIR__ . '/config/conexion.php';
 
 $error = $_SESSION['error_login'] ?? '';
 unset($_SESSION['error_login']); // Limpiar el error después de leerlo
@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         button:hover { background-color: #0056b3; }
         .error { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 16px; text-align: center; font-size: 14px; }
     </style>
-    <link rel="stylesheet" href="app.css">
-    <script src="app-ui.js" defer></script>
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
 <body>
     <div class="login-card">

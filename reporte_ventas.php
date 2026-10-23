@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2]);
-require_once 'conexion.php';
+require_once __DIR__ . '/config/conexion.php';
 
 // Asegurar compatibilidad con la variable de conexión existente
 if (!isset($pdo)) {
@@ -62,11 +62,12 @@ try {
         .btn-danger { background-color: #dc3545; color: white; }
         .btn-danger:hover { background-color: #c82333; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/table-search.js" defer></script>
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <h2>
         📊 Reporte General de Ventas
@@ -77,7 +78,14 @@ try {
         <div class="alert-danger">Error de Base de Datos: <?= htmlspecialchars($error_db) ?></div>
     <?php endif; ?>
 
-    <table>
+    <div class="table-tools">
+        <label class="table-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+            <input type="search" data-table-search="#sales-table" placeholder="Buscar en reporte de ventas..." aria-label="Buscar en reporte de ventas">
+        </label>
+        <span class="table-search-status" aria-live="polite"></span>
+    </div>
+    <table id="sales-table">
         <thead>
             <tr>
                 <th>ID Venta</th>
@@ -126,8 +134,8 @@ try {
     </table>
 
     <div class="footer-nav">
-        <a href="index.php" class="btn btn-primary">← Volver al Inventario General</a>
-        <a href="logout.php" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        <a href="index.php" class="btn btn-primary" title="Volver al inventario general">← Volver al Inventario General</a>
+        <a href="controllers/logout.php" class="btn btn-danger" title="Cerrar la sesión actual">🚪 Cerrar Sesión</a>
     </div>
 </div>
 

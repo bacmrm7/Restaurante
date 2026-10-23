@@ -160,6 +160,12 @@ tbody tr:last-child td { border-bottom: 0 !important; }
 .mode-btn.active { background: var(--forest) !important; color: #fff !important; border-color: var(--forest) !important; }
 .table-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
 .table-scroll { overflow-x: auto; }
+.table-tools { display: flex; min-height: 62px; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.table-search { position: relative; display: flex; width: min(100%, 320px); align-items: center; }
+.table-search svg { position: absolute; left: 11px; width: 17px; height: 17px; color: #78847a; pointer-events: none; }
+.table-search input { width: 100%; padding-left: 36px !important; }
+.table-search-status { min-width: 135px; color: var(--muted); font-size: 11px; }
+[hidden] { display: none !important; }
 .page-status { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
 .page-status-floating { position: fixed; top: 16px; right: 18px; z-index: 900; width: auto; margin: 0; }
 .page-date, .system-state { display: inline-flex; min-height: 34px; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: #536057; font-size: 11px; font-weight: 650; }

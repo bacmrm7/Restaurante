@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // 1 = Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 // Consultar insumos y materias primas para el inventario general.
 $sql = "SELECT p.*, c.nombre AS categoria_nombre 
@@ -138,8 +138,9 @@ foreach ($productos as $producto) {
             .topbar h1 { font-size: 24px; }
         }
     </style>
-    <link rel="stylesheet" href="app.css">
-    <script src="app-ui.js" defer></script>
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app-ui.js" defer></script>
+    <script src="assets/table-search.js" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -151,24 +152,24 @@ foreach ($productos as $producto) {
 
         <span class="nav-label">Panel</span>
         <nav class="side-nav">
-            <a class="side-link active" href="index.php" aria-current="page"><span class="nav-mark">IN</span>Inventario</a>
-            <a class="side-link" href="registrar_producto.php"><span class="nav-mark">+</span>Nuevo insumo</a>
-            <a class="side-link" href="recetas.php"><span class="nav-mark">RE</span>Recetas</a>
-            <a class="side-link" href="menu.php"><span class="nav-mark">ME</span>Menú y combos</a>
+                    <a class="side-link active" href="index.php" aria-current="page" title="Consultar el inventario general"><span class="nav-mark">IN</span>Inventario</a>
+                    <a class="side-link" href="registrar_producto.php" title="Registrar un nuevo insumo"><span class="nav-mark">+</span>Nuevo insumo</a>
+                    <a class="side-link" href="recetas.php" title="Consultar y gestionar recetas"><span class="nav-mark">RE</span>Recetas</a>
+                    <a class="side-link" href="menu.php" title="Ver el menú y administrar combos"><span class="nav-mark">ME</span>Menú y combos</a>
         </nav>
 
         <span class="nav-label">Operaciones</span>
         <nav class="side-nav">
-            <a class="side-link" href="ventas.php"><span class="nav-mark">PV</span>Punto de venta</a>
-            <a class="side-link" href="gastos.php"><span class="nav-mark">GA</span>Gastos operativos</a>
-            <a class="side-link" href="cierre_caja.php"><span class="nav-mark">CJ</span>Cierre de caja</a>
-            <a class="side-link" href="reporte_ventas.php"><span class="nav-mark">RV</span>Reporte de ventas</a>
+                    <a class="side-link" href="ventas.php" title="Registrar ventas en el punto de venta"><span class="nav-mark">PV</span>Punto de venta</a>
+                    <a class="side-link" href="gastos.php" title="Consultar y registrar gastos operativos"><span class="nav-mark">GA</span>Gastos operativos</a>
+                    <a class="side-link" href="cierre_caja.php" title="Consultar y consolidar cierres de caja"><span class="nav-mark">CJ</span>Cierre de caja</a>
+                    <a class="side-link" href="reporte_ventas.php" title="Consultar el historial de ventas"><span class="nav-mark">RV</span>Reporte de ventas</a>
         </nav>
 
         <div class="sidebar-bottom">
             <nav class="side-nav">
-                <a class="side-link" href="configuracion.php"><span class="nav-mark">CO</span>Configuración</a>
-                <a class="side-link logout" href="logout.php"><span class="nav-mark">↗</span>Cerrar sesión</a>
+                    <a class="side-link" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a>
+                    <a class="side-link logout" href="controllers/logout.php" title="Cerrar la sesión actual"><span class="nav-mark">↗</span>Cerrar sesión</a>
             </nav>
         </div>
     </aside>
@@ -231,8 +232,15 @@ foreach ($productos as $producto) {
                 </div>
 
                 <div class="table-panel">
+                    <div class="table-tools">
+                        <label class="table-search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+                            <input type="search" data-table-search="#inventory-table" placeholder="Buscar en inventario..." aria-label="Buscar en inventario">
+                        </label>
+                        <span class="table-search-status" aria-live="polite"></span>
+                    </div>
                     <div class="table-scroll">
-                        <table>
+                        <table id="inventory-table">
                             <thead>
                                 <tr>
                                     <th>Código</th>
@@ -265,7 +273,7 @@ foreach ($productos as $producto) {
                                                     <span class="status ok">Óptimo</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><a class="edit-link" href="editar_producto.php?id=<?= (int) $p['id'] ?>">Editar</a></td>
+                                            <td><a class="edit-link" href="editar_producto.php?id=<?= (int) $p['id'] ?>" title="Editar o reabastecer este producto">Editar</a></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>

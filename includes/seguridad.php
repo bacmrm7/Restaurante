@@ -3,11 +3,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$ruta_base = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
+if (basename($ruta_base) === 'controllers') {
+    $ruta_base = dirname($ruta_base);
+}
+
 // 1. Verifica que el usuario haya iniciado sesión
 function requerirAutenticacion() {
     // Acepta tanto 'usuario_id' como 'user_id' por compatibilidad
     if (!isset($_SESSION['usuario_id']) && !isset($_SESSION['user_id'])) {
-        header("Location: login.php");
+        global $ruta_base;
+        header('Location: ' . $ruta_base . '/login.php');
         exit(); // Detiene la ejecución inmediatamente
     }
 }
@@ -39,8 +45,8 @@ function requerirRol($roles_permitidos = []) {
                 .btn-secondary { background-color: #6c757d; color: white; }
                 .btn-secondary:hover { background-color: #5a6268; }
             </style>
-            <link rel='stylesheet' href='app.css'>
-            <script src='app-ui.js' defer></script>
+            <link rel='stylesheet' href='{$ruta_base}/assets/app.css'>
+            <script src='{$ruta_base}/assets/app-ui.js' defer></script>
         </head>
         <body>
             <div class='card'>
@@ -48,7 +54,7 @@ function requerirRol($roles_permitidos = []) {
                 <p>Tu rol de usuario no tiene los privilegios necesarios para acceder a este módulo del sistema de <strong>Hijos del Rey</strong>.</p>
                 <div class='actions'>
                     <a href='ventas.php' class='btn btn-primary'>💳 Ir al Módulo POS</a>
-                    <a href='logout.php' class='btn btn-secondary'>🚪 Cerrar Sesión</a>
+                    <a href='{$ruta_base}/controllers/logout.php' class='btn btn-secondary'>🚪 Cerrar Sesión</a>
                 </div>
             </div>
         </body>

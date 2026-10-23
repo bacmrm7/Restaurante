@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 $mensaje = "";
 $error = "";
@@ -90,15 +90,16 @@ foreach ($gastos as $g) {
         .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/table-search.js" defer></script>
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
         <h2>💸 Control de Gastos Operativos (Fijos / Variables)</h2>
-        <a href="index.php" class="btn btn-secondary">← Volver al Inventario</a>
+        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
     </div>
 
     <?php if ($mensaje): ?>
@@ -140,7 +141,7 @@ foreach ($gastos as $g) {
                     <input type="date" name="fecha" value="<?= date('Y-m-d') ?>" required>
                 </div>
 
-                <button type="submit" class="btn btn-success" style="width: 100%;">Guardar Gasto</button>
+                <button type="submit" class="btn btn-success" style="width: 100%;" title="Guardar este gasto operativo">Guardar Gasto</button>
             </form>
         </div>
 
@@ -153,7 +154,14 @@ foreach ($gastos as $g) {
                 </span>
             </div>
 
-            <table>
+            <div class="table-tools">
+                <label class="table-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+                    <input type="search" data-table-search="#expenses-table" placeholder="Buscar en gastos..." aria-label="Buscar en historial de gastos">
+                </label>
+                <span class="table-search-status" aria-live="polite"></span>
+            </div>
+            <table id="expenses-table">
                 <thead>
                     <tr>
                         <th>Fecha</th>

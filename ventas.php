@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2]); // Admin (1) y Cajero/Supervisor (2)
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 // Obtener solo los combos y platos del menú disponibles para venta (es_combo = 1 y precio_venta > 0)
 try {
@@ -48,11 +48,11 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         .alert-success { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
 
     <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
@@ -61,9 +61,9 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
             👤 Usuario Activo: <?= $rol_actual == 1 ? 'Administrador (Rol 1)' : 'Cajero / Operador (Rol 2)' ?>
         </span>
         <div class="pos-nav-links">
-            <a href="cierre_caja.php" class="btn-nav btn-cierre">📊 Mi Cierre Diario</a>
-            <a href="reporte_ventas.php" class="btn-nav btn-reporte">📄 Reporte de Tickets</a>
-            <a href="logout.php" class="btn-nav btn-salir">🚪 Cerrar Sesión</a>
+            <a href="cierre_caja.php" class="btn-nav btn-cierre" title="Consultar el cierre de caja diario">📊 Mi Cierre Diario</a>
+            <a href="reporte_ventas.php" class="btn-nav btn-reporte" title="Consultar los tickets de venta">📄 Reporte de Tickets</a>
+            <a href="controllers/logout.php" class="btn-nav btn-salir" title="Cerrar la sesión actual">🚪 Cerrar Sesión</a>
         </div>
     </div>
 
@@ -77,7 +77,7 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         <div class="alert-danger">⚠️ <?= htmlspecialchars($_GET['error']) ?></div>
     <?php endif; ?>
 
-    <form action="procesar_venta.php" method="POST">
+    <form action="controllers/procesar_venta.php" method="POST">
         <div class="box">
             <h4>1. Selección de Producto / Combo</h4>
             <div class="form-group">
@@ -128,7 +128,7 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
             </div>
         </div>
 
-        <button type="submit">
+        <button type="submit" title="Procesar la venta y descontar los ingredientes del inventario">
             ✅ Procesar Venta y Descontar Receta de Inventario
         </button>
 

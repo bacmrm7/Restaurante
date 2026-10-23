@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2]); // Administrador o Supervisor
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 $mensaje = '';
 $error = '';
@@ -103,15 +103,15 @@ if ($combo_seleccionado > 0) {
         .alert-success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #f5c6cb; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>📖 Ficha Técnica y Recetas (BOM)</h2>
-        <a href="index.php" class="btn btn-secondary">← Volver al Inventario</a>
+        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
     </div>
 
     <?php if ($mensaje): ?>
@@ -167,7 +167,7 @@ if ($combo_seleccionado > 0) {
                         <input type="number" step="0.01" name="cantidad" value="1.00" min="0.01" required>
                     </div>
 
-                    <button type="submit" class="btn btn-success">Guardar Ingrediente</button>
+                    <button type="submit" class="btn btn-success" title="Añadir el ingrediente seleccionado a la receta">Guardar Ingrediente</button>
                 </form>
             </div>
 
@@ -201,7 +201,7 @@ if ($combo_seleccionado > 0) {
                                         <form method="POST" action="recetas.php?combo_id=<?= $combo_seleccionado ?>" style="margin: 0;" data-confirm="¿Deseas quitar este ingrediente de la receta?">
                                             <input type="hidden" name="accion" value="eliminar">
                                             <input type="hidden" name="receta_id" value="<?= $ing['receta_id'] ?>">
-                                            <button type="submit" class="btn btn-danger">
+                                            <button type="submit" class="btn btn-danger" title="Quitar este ingrediente de la receta">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>Quitar
                                             </button>
                                         </form>

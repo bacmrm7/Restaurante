@@ -1,7 +1,7 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/config/conexion.php';
 
 $mensaje = "";
 $error = "";
@@ -69,15 +69,15 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'backup') {$nombre_archivo = "
         .danger-zone h3 { color: #c53030; border-color: #fed7d7; }
         .alert-success { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #c3e6cb; font-weight: bold; }
     </style>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 
-<?php include 'navegacion.php'; ?>
+<?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div class="header">
         <h2>⚙️ Configuración y Mantenimiento del Sistema</h2>
-        <a href="index.php" class="btn">← Regresar al Inventario</a>
+        <a href="index.php" class="btn" title="Volver al inventario general">← Regresar al Inventario</a>
     </div>
 
     <?php if ($mensaje): ?>
@@ -121,7 +121,7 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'backup') {$nombre_archivo = "
         <p style="color: #555; font-size: 14px; margin-top: 0;">
             Descarga un archivo de respaldo SQL con toda la información actual del inventario, ventas, recetas y cierres de caja registrados en el sistema.
         </p>
-        <a href="configuracion.php?action=backup" class="btn btn-primary" onclick="return confirm('¿Deseas descargar el respaldo SQL de la base de datos ahora?');">
+        <a href="configuracion.php?action=backup" class="btn btn-primary" title="Descargar un respaldo SQL de las bases de datos" onclick="return confirm('¿Deseas descargar el respaldo SQL de la base de datos ahora?');">
             📥 Descargar Respaldo de Base de Datos (.SQL)
         </a>
     </div>
@@ -132,8 +132,8 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'backup') {$nombre_archivo = "
         <p style="color: #718096; font-size: 14px; margin-top: 0;">
             Esta opción elimina de forma permanente todas las transacciones registradas (entradas/salidas del Kardex, historial de ventas, pagos y cierres de caja). Los productos y recetas registrados permanecerán en el catálogo con stock inicial en 0. Ideal para reiniciar pruebas antes de la defensa.
         </p>
-        <form method="POST" action="vaciar_historial.php" data-confirm="¿Deseas vaciar todo el historial y reiniciar los stocks? Esta acción no se puede deshacer.">
-            <button type="submit" class="btn btn-danger">🗑️ Vaciar Historial y Reiniciar Stocks a 0</button>
+        <form method="POST" action="controllers/vaciar_historial.php" data-confirm="¿Deseas vaciar todo el historial y reiniciar los stocks? Esta acción no se puede deshacer.">
+            <button type="submit" class="btn btn-danger" title="Eliminar el historial de transacciones y reiniciar existencias">🗑️ Vaciar Historial y Reiniciar Stocks a 0</button>
         </form>
     </div>
 </div>

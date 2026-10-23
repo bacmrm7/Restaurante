@@ -1,10 +1,10 @@
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/../includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
-include 'conexion.php';
+include __DIR__ . '/../config/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: configuracion.php");
+    header("Location: ../configuracion.php");
     exit();
 }
 
@@ -27,7 +27,7 @@ try {
 
     $conexion->commit();
 
-    header("Location: index.php?msg=historial_limpio");
+    header("Location: ../index.php?msg=historial_limpio");
     exit();
 
 } catch (Exception $e) {
@@ -39,7 +39,7 @@ try {
     echo "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f8d7da; color: #721c24; border-radius: 6px;'>";
     echo "<h3>❌ Error al vaciar el historial:</h3>";
     echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
-    echo "<a href='index.php' style='display: inline-block; background: #6c757d; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-top: 10px;'>← Volver al Inventario</a>";
+    echo "<a href='../index.php' style='display: inline-block; background: #6c757d; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-top: 10px;'>← Volver al Inventario</a>";
     echo "</div>";
     exit();
 }
