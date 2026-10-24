@@ -6,22 +6,25 @@ include __DIR__ . '/config/conexion.php';
 $mensaje = '';
 $error = '';
 
-// 1. Obtener el ID del producto enviado por GET
+// 1. Determinar si se edita un combo o un producto directo.
 if (!isset($_GET['id']) || empty($_GET['id'])) {
-    header("Location: index.php");
+    header("Location: " . (($_GET['tipo'] ?? '') === 'combo' ? 'menu.php' : 'index.php'));
     exit();
 }
 
-$id_producto = intval($_GET['id']);
+$es_combo = ($_GET['tipo'] ?? '') === 'combo';
+$id_producto = (int) $_GET['id'];
 
-// 2. Consultar los datos actuales del producto para rellenar el formulario
-$sql = "SELECT * FROM productos WHERE id = :id";
+// 2. Consultar el registro correspondiente para rellenar el formulario.
+$sql = $es_combo
+    ? "SELECT *, 1 AS es_combo, 0 AS stock_actual, 0 AS stock_minimo, 0 AS precio_compra FROM combos WHERE id = :id"
+    : "SELECT * FROM productos WHERE id = :id";
 $stmt = $conexion->prepare($sql);
 $stmt->execute([':id' => $id_producto]);
 $p = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$p) {
-    header("Location: index.php");
+    header("Location: " . ($es_combo ? 'menu.php' : 'index.php'));
     exit();
 }
 
@@ -30,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $codigo = trim($_POST['codigo']);
     $nombre = trim($_POST['nombre']);
     $descripcion = trim($_POST['descripcion']);
-    $es_combo = intval($p['es_combo']); // Se mantiene el tipo original del producto
+    $es_combo = (int) $p['es_combo'];
 
     if ($es_combo == 1) {
         // Valores predeterminados para Combos/Platos
@@ -50,31 +53,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Iniciar transacción en base de datos
         $conexion->beginTransaction();
 
-        $stock_anterior = intval($p['stock_actual']);
-        $stock_nuevo = $stock_anterior + $stock_adicional;
-
-        // Actualizar datos del producto
-        $sql_update = "UPDATE productos SET 
-                        codigo = :codigo,
-                        nombre = :nombre, 
-                        descripcion = :descripcion, 
-                        precio_compra = :precio_compra, 
-                        precio_venta = :precio_venta, 
-                        stock_actual = :stock_nuevo, 
-                        stock_minimo = :stock_minimo 
-                       WHERE id = :id";
-        
-        $stmt = $conexion->prepare($sql_update);
-        $stmt->execute([
-            ':codigo' => $codigo,
-            ':nombre' => $nombre,
-            ':descripcion' => $descripcion,
-            ':precio_compra' => $precio_compra,
-            ':precio_venta' => $precio_venta,
-            ':stock_nuevo' => $stock_nuevo,
-            ':stock_minimo' => $stock_minimo,
-            ':id' => $id_producto
-        ]);
+        if ($es_combo === 1) {
+            $sql_update = "UPDATE combos SET codigo = :codigo, nombre = :nombre, descripcion = :descripcion,
+                           precio_venta = :precio_venta, categoria_id = :categoria_id WHERE id = :id";
+            $stmt = $conexion->prepare($sql_update);
+            $stmt->execute([
+                ':codigo' => $codigo,
+                ':nombre' => $nombre,
+                ':descripcion' => $descripcion,
+                ':precio_venta' => $precio_venta,
+                ':categoria_id' => $_POST['categoria_id'] ?? $p['categoria_id'],
+                ':id' => $id_producto
+            ]);
+        } else {
+            $stock_anterior = intval($p['stock_actual']);
+            $stock_nuevo = $stock_anterior + $stock_adicional;
+            $sql_update = "UPDATE productos SET codigo = :codigo, nombre = :nombre, descripcion = :descripcion,
+                           precio_compra = :precio_compra, precio_venta = :precio_venta, stock_actual = :stock_nuevo,
+                           stock_minimo = :stock_minimo WHERE id = :id";
+            $stmt = $conexion->prepare($sql_update);
+            $stmt->execute([
+                ':codigo' => $codigo,
+                ':nombre' => $nombre,
+                ':descripcion' => $descripcion,
+                ':precio_compra' => $precio_compra,
+                ':precio_venta' => $precio_venta,
+                ':stock_nuevo' => $stock_nuevo,
+                ':stock_minimo' => $stock_minimo,
+                ':id' => $id_producto
+            ]);
+        }
 
         // Registrar entrada en el Kardex si es un Insumo y hubo reabastecimiento
         if ($es_combo == 0 && $stock_adicional > 0) {
@@ -94,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conexion->commit();
 
         // Redirección inteligente según el tipo de producto
-        if ($es_combo == 1) {
+        if ($es_combo === 1) {
             header("Location: menu.php?msg=actualizado");
         } else {
             header("Location: index.php?msg=actualizado");
@@ -138,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <h2>✏️ Editar / Reabastecer Producto</h2>
+    <h2><?= $es_combo ? 'Editar Combo / Plato' : 'Editar / Reabastecer Producto' ?></h2>
 
     <?php if (!empty($error)): ?>
         <div class="alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -148,10 +156,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Tipo de Registro: <?= $p['es_combo'] == 1 ? '🍗 Combo / Plato Final (Menú)' : '📦 Insumo / Materia Prima (Almacén)' ?>
     </div>
 
-    <form id="delete-product-form" method="POST" action="controllers/eliminar_producto.php" data-confirm="¿Deseas eliminar este producto? Esta acción no se puede deshacer.">
+    <form id="delete-product-form" method="POST" action="controllers/eliminar_producto.php" data-confirm="¿Deseas eliminar este registro? Esta acción no se puede deshacer.">
         <input type="hidden" name="id" value="<?= (int) $id_producto ?>">
+        <input type="hidden" name="tipo" value="<?= $es_combo ? 'combo' : 'producto' ?>">
     </form>
-    <form action="editar_producto.php?id=<?= $id_producto ?>" method="POST">
+    <form action="editar_producto.php?<?= $es_combo ? 'tipo=combo&' : '' ?>id=<?= $id_producto ?>" method="POST">
         
         <div class="form-group">
             <label>Código del Producto:</label>
@@ -167,6 +176,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Descripción:</label>
             <textarea name="descripcion" rows="2"><?= htmlspecialchars($p['descripcion']) ?></textarea>
         </div>
+
+        <?php if ($es_combo): ?>
+            <div class="form-group">
+                <label for="categoria_id">Categoría:</label>
+                <select name="categoria_id" id="categoria_id" required>
+                    <?php foreach ($conexion->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC) as $categoria): ?>
+                        <option value="<?= (int) $categoria['id'] ?>" <?= (int) $categoria['id'] === (int) $p['categoria_id'] ? 'selected' : '' ?>><?= htmlspecialchars($categoria['nombre']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        <?php endif; ?>
 
         <!-- FORMULARIO EXCLUSIVO PARA INSUMOS DE ALMACÉN -->
         <?php if ($p['es_combo'] == 0): ?>
@@ -203,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="btn-container">
             <button type="submit" form="delete-product-form" class="btn btn-danger" title="Eliminar este producto del inventario">🗑️ Eliminar</button>
             <div class="btn-group-right">
-                <a href="<?= $p['es_combo'] == 1 ? 'menu.php' : 'index.php' ?>" class="btn btn-secondary">Cancelar</a>
+                <a href="<?= $es_combo ? 'menu.php' : 'index.php' ?>" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
             </div>
         </div>

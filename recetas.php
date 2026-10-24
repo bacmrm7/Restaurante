@@ -15,18 +15,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($combo_id > 0 && $insumo_id > 0 && $cantidad > 0) {
             try {
-                // Verificar si el insumo ya está en la receta del combo
-                $stmtCheck = $conexion->prepare("SELECT id FROM recetas WHERE combo_id = ? AND insumo_id = ?");
-                $stmtCheck->execute([$combo_id, $insumo_id]);
-                
-                if ($stmtCheck->rowCount() > 0) {
-                    $stmtUp = $conexion->prepare("UPDATE recetas SET cantidad = cantidad + ? WHERE combo_id = ? AND insumo_id = ?");
-                    $stmtUp->execute([$cantidad, $combo_id, $insumo_id]);
+                $stmtCombo = $conexion->prepare("SELECT id FROM combos WHERE id = ?");
+                $stmtCombo->execute([$combo_id]);
+                $combo_id_validado = $stmtCombo->fetchColumn();
+
+                if ($combo_id_validado === false) {
+                    $error = "El combo seleccionado ya no existe.";
                 } else {
-                    $stmtIns = $conexion->prepare("INSERT INTO recetas (combo_id, insumo_id, cantidad) VALUES (?, ?, ?)");
-                    $stmtIns->execute([$combo_id, $insumo_id, $cantidad]);
+                    $combo_id = (int) $combo_id_validado;
+
+                    // Verificar si el insumo ya está en la receta del combo
+                    $stmtCheck = $conexion->prepare("SELECT id FROM recetas WHERE combo_id = ? AND insumo_id = ?");
+                    $stmtCheck->execute([$combo_id, $insumo_id]);
+
+                    if ($stmtCheck->rowCount() > 0) {
+                        $stmtUp = $conexion->prepare("UPDATE recetas SET cantidad = cantidad + ? WHERE combo_id = ? AND insumo_id = ?");
+                        $stmtUp->execute([$cantidad, $combo_id, $insumo_id]);
+                    } else {
+                        $stmtIns = $conexion->prepare("INSERT INTO recetas (combo_id, insumo_id, cantidad) VALUES (?, ?, ?)");
+                        $stmtIns->execute([$combo_id, $insumo_id, $cantidad]);
+                    }
+                    $mensaje = "Ingrediente agregado correctamente a la receta.";
                 }
-                $mensaje = "Ingrediente agregado correctamente a la receta.";
             } catch (PDOException $e) {
                 $error = "Error al guardar el ingrediente: " . $e->getMessage();
             }
@@ -45,9 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// 2. Obtener lista de Combos / Platos Principales (Estrictamente es_combo = 1)
+// 2. Obtener lista de Combos / Platos Principales
 try {
-    $stmtCombos = $conexion->query("SELECT id, codigo, nombre FROM productos WHERE es_combo = 1 ORDER BY nombre ASC");
+    $stmtCombos = $conexion->query("SELECT * FROM combos ORDER BY id DESC");
     $combos = $stmtCombos->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $combos = [];
@@ -133,9 +143,9 @@ if ($combo_seleccionado > 0) {
             <form method="GET" action="recetas.php" id="formCombo">
                 <label for="combo_id" style="font-size: 16px;">Selecciona el Combo / Plato a Estructurar:</label>
                 <select name="combo_id" id="combo_id" onchange="document.getElementById('formCombo').submit();" style="font-size: 15px; font-weight: bold; margin-top: 5px;">
-                    <?php foreach ($combos as $c): ?>
-                        <option value="<?= $c['id'] ?>" <?= $c['id'] == $combo_seleccionado ? 'selected' : '' ?>>
-                            [<?= htmlspecialchars($c['codigo']) ?>] <?= htmlspecialchars($c['nombre']) ?>
+                    <?php foreach ($combos as $combo): ?>
+                        <option value="<?= (int) $combo['id'] ?>" <?= (int) $combo['id'] === (int) $combo_seleccionado ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($combo['nombre']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -155,9 +165,7 @@ if ($combo_seleccionado > 0) {
                         <select name="insumo_id" required>
                             <option value="">Seleccione insumo...</option>
                             <?php foreach ($insumos as $ins): ?>
-                                <?php if ($ins['id'] != $combo_seleccionado): ?>
-                                    <option value="<?= $ins['id'] ?>">[<?= htmlspecialchars($ins['codigo']) ?>] <?= htmlspecialchars($ins['nombre']) ?></option>
-                                <?php endif; ?>
+                                <option value="<?= $ins['id'] ?>">[<?= htmlspecialchars($ins['codigo']) ?>] <?= htmlspecialchars($ins['nombre']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

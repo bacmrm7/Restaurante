@@ -3,11 +3,12 @@ require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2]); // Admin (1) y Cajero/Supervisor (2)
 include __DIR__ . '/config/conexion.php';
 
-// Obtener solo los combos y platos del menú disponibles para venta (es_combo = 1 y precio_venta > 0)
+// Obtener combos y productos directos disponibles para venta.
 try {
-    $stmt = $conexion->query("SELECT id, codigo, nombre, precio_venta FROM productos WHERE es_combo = 1 AND precio_venta > 0 ORDER BY nombre ASC");
-    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $combos = $conexion->query("SELECT id, codigo, nombre, precio_venta FROM combos WHERE precio_venta > 0 ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $productos = $conexion->query("SELECT id, codigo, nombre, precio_venta FROM productos WHERE precio_venta > 0 ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
+    $combos = [];
     $productos = [];
 }
 
@@ -81,15 +82,23 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         <div class="box">
             <h4>1. Selección de Producto / Combo</h4>
             <div class="form-group">
-                <label for="producto_select">Seleccionar Combo o Plato:</label>
-                <select name="items[0][producto_id]" id="producto_select" required onchange="actualizarPrecio()">
+                <label for="producto_select">Seleccionar producto o combo:</label>
+                <select id="producto_select" required onchange="actualizarPrecio()">
                     <option value="" data-precio="0">-- Seleccione un producto --</option>
+                    <?php foreach ($combos as $combo): ?>
+                        <option value="combo:<?= (int) $combo['id'] ?>" data-tipo="combo" data-precio="<?= htmlspecialchars($combo['precio_venta']) ?>">
+                            [Combo] [<?= htmlspecialchars($combo['codigo']) ?>] <?= htmlspecialchars($combo['nombre']) ?> ($<?= number_format($combo['precio_venta'], 2) ?>)
+                        </option>
+                    <?php endforeach; ?>
                     <?php foreach ($productos as $p): ?>
-                        <option value="<?= $p['id'] ?>" data-precio="<?= $p['precio_venta'] ?>">
-                            [<?= htmlspecialchars($p['codigo']) ?>] <?= htmlspecialchars($p['nombre']) ?> ($<?= number_format($p['precio_venta'], 2) ?>)
+                        <option value="producto:<?= (int) $p['id'] ?>" data-tipo="producto" data-precio="<?= htmlspecialchars($p['precio_venta']) ?>">
+                            [Producto] [<?= htmlspecialchars($p['codigo']) ?>] <?= htmlspecialchars($p['nombre']) ?> ($<?= number_format($p['precio_venta'], 2) ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <input type="hidden" name="items[0][tipo]" id="item_tipo_input">
+                <input type="hidden" name="items[0][combo_id]" id="item_combo_id_input">
+                <input type="hidden" name="items[0][producto_id]" id="item_producto_id_input">
             </div>
             
             <div class="form-group">
@@ -145,6 +154,11 @@ function actualizarPrecio() {
     const select = document.getElementById('producto_select');
     const selectedOption = select.options[select.selectedIndex];
     const precioUnitario = parseFloat(selectedOption.getAttribute('data-precio')) || 0;
+    const [tipo, id] = select.value.split(':');
+
+    document.getElementById('item_tipo_input').value = tipo || '';
+    document.getElementById('item_combo_id_input').value = tipo === 'combo' ? id : '';
+    document.getElementById('item_producto_id_input').value = tipo === 'producto' ? id : '';
     
     const cantidad = parseInt(document.getElementById('cantidad_input').value) || 1;
     const total = precioUnitario * cantidad;

@@ -72,6 +72,30 @@ foreach ($gastos as $g) {
     }
 }
 
+$calcularCostoDetalles = static function (array $detalles) use ($conexion): float {
+    $costo_total = 0.0;
+    $stmtReceta = $conexion->prepare("SELECT r.cantidad, p.precio_compra FROM recetas r INNER JOIN productos p ON p.id = r.insumo_id WHERE r.combo_id = ?");
+    $stmtProducto = $conexion->prepare("SELECT precio_compra FROM productos WHERE id = ?");
+
+    foreach ($detalles as $detalle) {
+        $cantidad_vendida = (float) $detalle['cant_vendida'];
+        if ($detalle['combo_id'] !== null) {
+            $stmtReceta->execute([$detalle['combo_id']]);
+            foreach ($stmtReceta->fetchAll(PDO::FETCH_ASSOC) as $ingrediente) {
+                $costo_total += (float) $ingrediente['cantidad'] * $cantidad_vendida * (float) $ingrediente['precio_compra'];
+            }
+        } elseif ($detalle['producto_id'] !== null) {
+            $stmtProducto->execute([$detalle['producto_id']]);
+            $precio_compra = $stmtProducto->fetchColumn();
+            if ($precio_compra !== false) {
+                $costo_total += (float) $precio_compra * $cantidad_vendida;
+            }
+        }
+    }
+
+    return $costo_total;
+};
+
 // ==========================================
 // CÁLCULOS SEGÚN EL MODO DE VISTA
 // ==========================================
@@ -111,27 +135,17 @@ if ($modo === 'mes' && $es_admin) {
     }
 
     $stmtDetalles = $conexion->prepare("
-        SELECT dv.producto_id, dv.cantidad as cant_vendida 
-        FROM detalle_ventas dv 
-        JOIN ventas v ON dv.venta_id = v.id 
+        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
+        FROM detalle_ventas dv
+        JOIN ventas v ON dv.venta_id = v.id
+        LEFT JOIN productos p ON dv.producto_id = p.id
+        LEFT JOIN combos c ON dv.combo_id = c.id
         WHERE DATE_FORMAT(v.fecha_venta, '%Y-%m') = ?
     ");
     $stmtDetalles->execute([$mes_seleccionado]);
     $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
 
-    $costo_total_bom_periodo = 0;
-    foreach ($detalles_ventas as $dv) {
-        $stmtReceta = $conexion->prepare("SELECT insumo_id, cantidad FROM recetas WHERE combo_id = ?");
-        $stmtReceta->execute([$dv['producto_id']]);
-        $ingredientes = $stmtReceta->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($ingredientes as $ing) {
-            $stmtIns = $conexion->prepare("SELECT precio_compra FROM productos WHERE id = ?");
-            $stmtIns->execute([$ing['insumo_id']]);
-            $insumo = $stmtIns->fetch(PDO::FETCH_ASSOC);
-            $costo_total_bom_periodo += ($ing['cantidad'] * $dv['cant_vendida'] * floatval($insumo['precio_compra'] ?? 0));
-        }
-    }
+    $costo_total_bom_periodo = $calcularCostoDetalles($detalles_ventas);
 
     $total_gasto_operativo_periodo = $gasto_diario_base * 16;
     $ganancia_neta_periodo = $total_ventas_periodo - $costo_total_bom_periodo - $total_gasto_operativo_periodo;
@@ -171,27 +185,17 @@ if ($modo === 'mes' && $es_admin) {
     }
 
     $stmtDetalles = $conexion->prepare("
-        SELECT dv.producto_id, dv.cantidad as cant_vendida 
-        FROM detalle_ventas dv 
-        JOIN ventas v ON dv.venta_id = v.id 
+        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
+        FROM detalle_ventas dv
+        JOIN ventas v ON dv.venta_id = v.id
+        LEFT JOIN productos p ON dv.producto_id = p.id
+        LEFT JOIN combos c ON dv.combo_id = c.id
         WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
     ");
     $stmtDetalles->execute([$fecha_desde, $fecha_hasta]);
     $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
 
-    $costo_total_bom_periodo = 0;
-    foreach ($detalles_ventas as $dv) {
-        $stmtReceta = $conexion->prepare("SELECT insumo_id, cantidad FROM recetas WHERE combo_id = ?");
-        $stmtReceta->execute([$dv['producto_id']]);
-        $ingredientes = $stmtReceta->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($ingredientes as $ing) {
-            $stmtIns = $conexion->prepare("SELECT precio_compra FROM productos WHERE id = ?");
-            $stmtIns->execute([$ing['insumo_id']]);
-            $insumo = $stmtIns->fetch(PDO::FETCH_ASSOC);
-            $costo_total_bom_periodo += ($ing['cantidad'] * $dv['cant_vendida'] * floatval($insumo['precio_compra'] ?? 0));
-        }
-    }
+    $costo_total_bom_periodo = $calcularCostoDetalles($detalles_ventas);
 
     $dias_diferencia = (strtotime($fecha_hasta) - strtotime($fecha_desde)) / (60 * 60 * 24) + 1;
     $dias_diferencia = max(1, $dias_diferencia);
@@ -237,26 +241,17 @@ if ($modo === 'mes' && $es_admin) {
     }
 
     $stmtDetalles = $conexion->prepare("
-        SELECT dv.producto_id, dv.cantidad as cant_vendida 
-        FROM detalle_ventas dv 
-        JOIN ventas v ON dv.venta_id = v.id 
+        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
+        FROM detalle_ventas dv
+        JOIN ventas v ON dv.venta_id = v.id
+        LEFT JOIN productos p ON dv.producto_id = p.id
+        LEFT JOIN combos c ON dv.combo_id = c.id
         WHERE DATE(v.fecha_venta) = ?
     ");
     $stmtDetalles->execute([$fecha_seleccionada]);
     $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
 
-    $costo_total_bom_dia = 0;
-    foreach ($detalles_ventas as $dv) {
-        $stmtReceta = $conexion->prepare("SELECT insumo_id, cantidad FROM recetas WHERE combo_id = ?");
-        $stmtReceta->execute([$dv['producto_id']]);
-        $ingredientes = $stmtReceta->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($ingredientes as $ing) {
-            $stmtIns = $conexion->prepare("SELECT precio_compra FROM productos WHERE id = ?");
-            $stmtIns->execute([$ing['insumo_id']]);
-            $insumo = $stmtIns->fetch(PDO::FETCH_ASSOC);
-            $costo_total_bom_dia += ($ing['cantidad'] * $dv['cant_vendida'] * floatval($insumo['precio_compra'] ?? 0));
-        }
-    }
+    $costo_total_bom_dia = $calcularCostoDetalles($detalles_ventas);
 
     $gasto_operativo_diario = $gasto_diario_base;
     $ganancia_neta_dia = $total_ventas_dia - $costo_total_bom_dia - $gasto_operativo_diario;

@@ -22,7 +22,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
 
-        // 1. Registrar la Cabecera de la Venta
+        // Preparar consultas optimizadas para el ciclo
+        $stmtDetalleProducto = $pdo->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
+        $stmtDetalleCombo = $pdo->prepare("INSERT INTO detalle_ventas (venta_id, combo_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
+        $stmtProducto = $pdo->prepare("SELECT id, stock_actual, precio_venta FROM productos WHERE id = ? FOR UPDATE");
+        $stmtCombo = $pdo->prepare("SELECT id, precio_venta FROM combos WHERE id = ? FOR UPDATE");
+        $stmtReceta = $pdo->prepare("SELECT p.id AS producto_id, r.cantidad FROM recetas r INNER JOIN productos p ON p.id = r.insumo_id WHERE r.combo_id = ?");
+        $stmtStockActual = $pdo->prepare("SELECT stock_actual FROM productos WHERE id = ? FOR UPDATE");
+        $stmtDescuento = $pdo->prepare("UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?");
+
+        // Registro en Kardex (Movimientos)
+        $stmtKardex = $pdo->prepare("INSERT INTO movimientos (producto_id, tipo, cantidad, stock_anterior, stock_nuevo, motivo, usuario_id) VALUES (?, 'Salida', ?, ?, ?, ?, ?)");
+
+        // Validar entidades y calcular importes usando precios almacenados en la base de datos.
+        $total_venta = 0.0;
+        foreach ($items as &$item) {
+            $tipo_item = $item['tipo'] ?? '';
+            $id_item = filter_var(
+                $tipo_item === 'combo' ? ($item['combo_id'] ?? null) : ($item['producto_id'] ?? null),
+                FILTER_VALIDATE_INT
+            );
+            if (!in_array($tipo_item, ['combo', 'producto'], true) || $id_item === false || $id_item <= 0) {
+                throw new RuntimeException('El producto o combo seleccionado no es válido.');
+            }
+
+            $cantidad = filter_var($item['cantidad'] ?? null, FILTER_VALIDATE_INT);
+            if ($cantidad === false || $cantidad <= 0) {
+                throw new RuntimeException('La cantidad vendida debe ser un entero mayor que cero.');
+            }
+
+            if ($tipo_item === 'combo') {
+                $stmtCombo->execute([$id_item]);
+                $entidad = $stmtCombo->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $stmtProducto->execute([$id_item]);
+                $entidad = $stmtProducto->fetch(PDO::FETCH_ASSOC);
+            }
+            if (!$entidad) {
+                throw new RuntimeException('El producto o combo seleccionado ya no existe.');
+            }
+
+            $item['precio_unitario'] = (float) $entidad['precio_venta'];
+            $total_venta += $cantidad * $item['precio_unitario'];
+        }
+        unset($item);
+
+        // 1. Registrar la Cabecera de la Venta con el total calculado desde la base de datos.
         $stmtVenta = $pdo->prepare("INSERT INTO ventas (codigo_factura, usuario_id, total) VALUES (?, ?, ?)");
         $stmtVenta->execute([$codigo_factura, $usuario_id, $total_venta]);
         $venta_id = $pdo->lastInsertId();
@@ -33,43 +78,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtPago->execute([$venta_id, $pago['metodo'], $pago['monto'], $pago['referencia'] ?? null]);
         }
 
-        // Preparar consultas optimizadas para el ciclo
-        $stmtDetalle = $pdo->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
-        $stmtProducto = $pdo->prepare("SELECT id, es_combo FROM productos WHERE id = ?");
-        $stmtReceta = $pdo->prepare("SELECT p.id AS producto_id, r.cantidad FROM recetas r INNER JOIN productos p ON p.id = r.insumo_id WHERE r.combo_id = ? AND p.es_combo = 0");
-        $stmtStockActual = $pdo->prepare("SELECT stock_actual FROM productos WHERE id = ? FOR UPDATE");
-        $stmtDescuento = $pdo->prepare("UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?");
-        
-        // Registro en Kardex (Movimientos)
-        $stmtKardex = $pdo->prepare("INSERT INTO movimientos (producto_id, tipo, cantidad, stock_anterior, stock_nuevo, motivo, usuario_id) VALUES (?, 'Salida', ?, ?, ?, ?, ?)");
-
         // 3. Procesar Productos, Combos e Inventario en Tiempo Real
         foreach ($items as $item) {
-            $producto_id = filter_var($item['producto_id'] ?? null, FILTER_VALIDATE_INT);
-            if ($producto_id === false || $producto_id <= 0) {
-                throw new RuntimeException('El producto seleccionado no es válido.');
+            $tipo_item = $item['tipo'] ?? '';
+            $id_item = filter_var(
+                $tipo_item === 'combo' ? ($item['combo_id'] ?? null) : ($item['producto_id'] ?? null),
+                FILTER_VALIDATE_INT
+            );
+            if (!in_array($tipo_item, ['combo', 'producto'], true) || $id_item === false || $id_item <= 0) {
+                throw new RuntimeException('El producto o combo seleccionado no es válido.');
             }
-
-            $stmtProducto->execute([$producto_id]);
-            $producto = $stmtProducto->fetch(PDO::FETCH_ASSOC);
-            if (!$producto) {
-                throw new RuntimeException('El producto seleccionado ya no existe en el inventario.');
-            }
-            $producto_id = (int) $producto['id'];
             $cant_vendida = $item['cantidad'];
             $precio_unitario = $item['precio_unitario'];
             
             // CORREGIDO: Operador de multiplicación aplicado correctamente
             $subtotal = $cant_vendida * $precio_unitario;
 
-            $stmtDetalle->execute([$venta_id, $producto_id, $cant_vendida, $precio_unitario, $subtotal]);
+            if ($tipo_item === 'combo') {
+                $stmtCombo->execute([$id_item]);
+                $combo_id = $stmtCombo->fetchColumn();
+                if ($combo_id === false) {
+                    throw new RuntimeException('El combo seleccionado ya no existe.');
+                }
+                $combo_id = (int) $combo_id;
 
-            // Verificar si el producto tiene receta (es un Combo de Hijos del Rey)
-            $stmtReceta->execute([$producto_id]);
-            $ingredientes = $stmtReceta->fetchAll(PDO::FETCH_ASSOC);
+                $stmtReceta->execute([$combo_id]);
+                $ingredientes = $stmtReceta->fetchAll(PDO::FETCH_ASSOC);
+                if (!$ingredientes) {
+                    throw new RuntimeException('No se puede procesar este combo porque no tiene insumos configurados en su receta.');
+                }
 
-            if (count($ingredientes) > 0) {
-                // ES UN COMBO: Descontar materias primas / insumos asociados según el BOM
+                $stmtDetalleCombo->execute([$venta_id, $combo_id, $cant_vendida, $precio_unitario, $subtotal]);
+
+                // Descontar materias primas e insumos del BOM.
                 foreach ($ingredientes as $ing) {
                     $insumo_id = (int) $ing['producto_id'];
                     $cant_a_descontar = $ing['cantidad'] * $cant_vendida;
@@ -93,19 +134,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtKardex->execute([$insumo_id, $cant_a_descontar, $stock_anterior, $stock_nuevo, $motivo, $usuario_id]);
                 }
             } else {
-                if ((int) $producto['es_combo'] === 1) {
-                    throw new RuntimeException('No se puede procesar este combo porque no tiene insumos válidos configurados en su receta.');
-                }
-
-                // VENTA DIRECTA (Productos individuales, bebidas, etc.)
-                $stmtStockActual->execute([$producto_id]);
-                $stock_anterior = $stmtStockActual->fetchColumn();
-                if ($stock_anterior === false) {
+                $stmtProducto->execute([$id_item]);
+                $producto = $stmtProducto->fetch(PDO::FETCH_ASSOC);
+                if (!$producto) {
                     throw new RuntimeException('El producto seleccionado ya no existe en el inventario.');
                 }
-                $stock_anterior = (float) $stock_anterior;
+                $producto_id = (int) $producto['id'];
+                $stock_anterior = (float) $producto['stock_actual'];
+
+                $stmtDetalleProducto->execute([$venta_id, $producto_id, $cant_vendida, $precio_unitario, $subtotal]);
                 
-                // CORREGIDO: Operador de resta aplicado correctamente
+                // Producto o insumo directo: descontar su propio stock.
                 $stock_nuevo = $stock_anterior - $cant_vendida;
 
                 // Restar del stock

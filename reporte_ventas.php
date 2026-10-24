@@ -20,16 +20,17 @@ try {
             v.id AS venta_id,
             v.total AS total_venta,
             v.fecha_venta,
-            COALESCE(p.nombre, 'Producto / Combo General') AS producto_nombre,
+            COALESCE(c.nombre, p.nombre, 'Producto / Combo General') AS producto_nombre,
             COALESCE(dv.cantidad, 1) AS cantidad,
             COALESCE(dv.precio_unitario, v.total) AS precio_unitario,
-            (COALESCE(dv.cantidad, 1) * COALESCE(dv.precio_unitario, v.total)) AS subtotal_item,
+            COALESCE(dv.subtotal, COALESCE(dv.cantidad, 1) * COALESCE(dv.precio_unitario, v.total)) AS subtotal_item,
             COALESCE(pv.metodo_pago, 'Efectivo USD') AS metodo_pago,
             COALESCE(pv.monto, v.total) AS monto_pagado,
             COALESCE(pv.referencia, 'S/R') AS referencia
         FROM ventas v
         LEFT JOIN detalle_ventas dv ON v.id = dv.venta_id
         LEFT JOIN productos p ON dv.producto_id = p.id
+        LEFT JOIN combos c ON dv.combo_id = c.id
         LEFT JOIN pagos_ventas pv ON v.id = pv.venta_id
         ORDER BY v.id DESC
     ";

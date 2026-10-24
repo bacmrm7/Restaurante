@@ -3,13 +3,16 @@ require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1]); // Solo Administrador
 include __DIR__ . '/config/conexion.php';
 
-// Si se envió el formulario para guardar el producto
+$tipo_registro = ($_GET['tipo'] ?? $_POST['tipo'] ?? '') === 'combo' ? 'combo' : 'producto';
+
+// Si se envió el formulario para guardar un producto o un combo
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $categoria_id = $_POST['categoria_id'];
     $codigo = trim($_POST['codigo']);
     $nombre = trim($_POST['nombre']);
     $descripcion = trim($_POST['descripcion']);
-    $es_combo = intval($_POST['es_combo']); 
+    $es_combo = intval($_POST['es_combo']);
+    $tipo_registro = $es_combo === 1 ? 'combo' : 'producto';
 
     // Asignar valores según el tipo para evitar incongruencias contables
     if ($es_combo == 1) {
@@ -25,14 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $sql = "INSERT INTO productos (categoria_id, codigo, nombre, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, es_combo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conexion->prepare($sql);
-        $stmt->execute([$categoria_id, $codigo, $nombre, $descripcion, $precio_compra, $precio_venta, $stock_actual, $stock_minimo, $es_combo]);
-
-        if ($es_combo == 1) {
+        if ($es_combo === 1) {
+            $sql = "INSERT INTO combos (categoria_id, codigo, nombre, descripcion, precio_venta) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conexion->prepare($sql);
+            $stmt->execute([$categoria_id, $codigo, $nombre, $descripcion, $precio_venta]);
             header('Location: menu.php?msg=combo_creado');
         } else {
+            $sql = "INSERT INTO productos (categoria_id, codigo, nombre, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, es_combo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)";
+            $stmt = $conexion->prepare($sql);
+            $stmt->execute([$categoria_id, $codigo, $nombre, $descripcion, $precio_compra, $precio_venta, $stock_actual, $stock_minimo]);
             header('Location: index.php?msg=producto_creado');
         }
         exit();
@@ -94,7 +99,7 @@ try {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <h2>Registrar Nuevo Producto</h2>
+    <h2><?= $tipo_registro === 'combo' ? 'Registrar Nuevo Combo' : 'Registrar Nuevo Producto' ?></h2>
 
     <?php if (isset($error_db)): ?>
         <div class="alert-error"><?= htmlspecialchars($error_db) ?></div>
@@ -107,8 +112,8 @@ try {
             <div class="form-group" style="margin-bottom: 0;">
                 <label for="es_combo" style="color: #0056b3;">📌 Tipo de Registro:</label>
                 <select name="es_combo" id="es_combo" onchange="alternarCampos()" required>
-                    <option value="0">📦 Insumo / Materia Prima (Almacén)</option>
-                    <option value="1">🍗 Combo / Plato Final (Menú de Venta)</option>
+                    <option value="0" <?= $tipo_registro === 'producto' ? 'selected' : '' ?>>📦 Insumo / Materia Prima (Almacén)</option>
+                    <option value="1" <?= $tipo_registro === 'combo' ? 'selected' : '' ?>>🍗 Combo / Plato Final (Menú de Venta)</option>
                 </select>
             </div>
         </div>
@@ -169,7 +174,7 @@ try {
         <button type="submit">Guardar Producto</button>
     </form>
 
-    <a href="index.php" class="back-link">← Volver al Inventario General</a>
+    <a href="<?= $tipo_registro === 'combo' ? 'menu.php' : 'index.php' ?>" class="back-link">← Volver al <?= $tipo_registro === 'combo' ? 'Menú de Combos' : 'Inventario General' ?></a>
 </div>
 
 </body>
