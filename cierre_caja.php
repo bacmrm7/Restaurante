@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/seguridad.php';
-requerirRol([1, 2]); // Permitir Administrador (1) y Cajero (2)
+requerirRol([1, 2, 3]); // Administrador, Cajero y Supervisor
 include __DIR__ . '/config/conexion.php';
 
 $mensaje = "";
@@ -23,6 +23,12 @@ if (isset($_GET['mes_num']) && isset($_GET['anio_num'])) {
     $mes_seleccionado = $_GET['anio_num'] . '-' . $_GET['mes_num'];
 } else {
     $mes_seleccionado = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
+}
+
+// El Supervisor puede consultar cierres, pero no guardarlos.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_cierre']) && (int) ($_SESSION['rol_id'] ?? 0) === 3) {
+    http_response_code(403);
+    exit('El rol Supervisor tiene permiso de consulta, pero no puede guardar cierres de caja.');
 }
 
 // Procesar Guardado del Cierre Diario
@@ -72,28 +78,24 @@ foreach ($gastos as $g) {
     }
 }
 
-$calcularCostoDetalles = static function (array $detalles) use ($conexion): float {
-    $costo_total = 0.0;
-    $stmtReceta = $conexion->prepare("SELECT r.cantidad, p.precio_compra FROM recetas r INNER JOIN productos p ON p.id = r.insumo_id WHERE r.combo_id = ?");
-    $stmtProducto = $conexion->prepare("SELECT precio_compra FROM productos WHERE id = ?");
-
-    foreach ($detalles as $detalle) {
-        $cantidad_vendida = (float) $detalle['cant_vendida'];
-        if ($detalle['combo_id'] !== null) {
-            $stmtReceta->execute([$detalle['combo_id']]);
-            foreach ($stmtReceta->fetchAll(PDO::FETCH_ASSOC) as $ingrediente) {
-                $costo_total += (float) $ingrediente['cantidad'] * $cantidad_vendida * (float) $ingrediente['precio_compra'];
-            }
-        } elseif ($detalle['producto_id'] !== null) {
-            $stmtProducto->execute([$detalle['producto_id']]);
-            $precio_compra = $stmtProducto->fetchColumn();
-            if ($precio_compra !== false) {
-                $costo_total += (float) $precio_compra * $cantidad_vendida;
-            }
-        }
-    }
-
-    return $costo_total;
+$calcularCostoVentas = static function (string $filtroFecha, array $parametros) use ($conexion): float {
+    $sql = "SELECT COALESCE(SUM(
+                CASE
+                    WHEN c.id IS NOT NULL THEN COALESCE(r.cantidad, 0) * dv.cantidad * COALESCE(insumo.precio_compra, 0)
+                    WHEN producto.id IS NOT NULL THEN producto.precio_compra * dv.cantidad
+                    ELSE 0
+                END
+            ), 0) AS costo_total
+            FROM detalle_ventas dv
+            INNER JOIN ventas v ON v.id = dv.venta_id
+            LEFT JOIN combos c ON c.id = dv.combo_id
+            LEFT JOIN recetas r ON r.combo_id = c.id
+            LEFT JOIN productos insumo ON insumo.id = r.insumo_id
+            LEFT JOIN productos producto ON producto.id = dv.producto_id
+            WHERE {$filtroFecha}";
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute($parametros);
+    return (float) $stmt->fetchColumn();
 };
 
 // ==========================================
@@ -134,18 +136,7 @@ if ($modo === 'mes' && $es_admin) {
         }
     }
 
-    $stmtDetalles = $conexion->prepare("
-        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
-        FROM detalle_ventas dv
-        JOIN ventas v ON dv.venta_id = v.id
-        LEFT JOIN productos p ON dv.producto_id = p.id
-        LEFT JOIN combos c ON dv.combo_id = c.id
-        WHERE DATE_FORMAT(v.fecha_venta, '%Y-%m') = ?
-    ");
-    $stmtDetalles->execute([$mes_seleccionado]);
-    $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
-
-    $costo_total_bom_periodo = $calcularCostoDetalles($detalles_ventas);
+    $costo_total_bom_periodo = $calcularCostoVentas("DATE_FORMAT(v.fecha_venta, '%Y-%m') = ?", [$mes_seleccionado]);
 
     $total_gasto_operativo_periodo = $gasto_diario_base * 16;
     $ganancia_neta_periodo = $total_ventas_periodo - $costo_total_bom_periodo - $total_gasto_operativo_periodo;
@@ -184,18 +175,7 @@ if ($modo === 'mes' && $es_admin) {
         }
     }
 
-    $stmtDetalles = $conexion->prepare("
-        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
-        FROM detalle_ventas dv
-        JOIN ventas v ON dv.venta_id = v.id
-        LEFT JOIN productos p ON dv.producto_id = p.id
-        LEFT JOIN combos c ON dv.combo_id = c.id
-        WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
-    ");
-    $stmtDetalles->execute([$fecha_desde, $fecha_hasta]);
-    $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
-
-    $costo_total_bom_periodo = $calcularCostoDetalles($detalles_ventas);
+    $costo_total_bom_periodo = $calcularCostoVentas('DATE(v.fecha_venta) BETWEEN ? AND ?', [$fecha_desde, $fecha_hasta]);
 
     $dias_diferencia = (strtotime($fecha_hasta) - strtotime($fecha_desde)) / (60 * 60 * 24) + 1;
     $dias_diferencia = max(1, $dias_diferencia);
@@ -240,18 +220,7 @@ if ($modo === 'mes' && $es_admin) {
         $efectivo_usd_esperado = $total_ventas_dia;
     }
 
-    $stmtDetalles = $conexion->prepare("
-        SELECT p.id AS producto_id, c.id AS combo_id, dv.cantidad AS cant_vendida
-        FROM detalle_ventas dv
-        JOIN ventas v ON dv.venta_id = v.id
-        LEFT JOIN productos p ON dv.producto_id = p.id
-        LEFT JOIN combos c ON dv.combo_id = c.id
-        WHERE DATE(v.fecha_venta) = ?
-    ");
-    $stmtDetalles->execute([$fecha_seleccionada]);
-    $detalles_ventas = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
-
-    $costo_total_bom_dia = $calcularCostoDetalles($detalles_ventas);
+    $costo_total_bom_dia = $calcularCostoVentas('DATE(v.fecha_venta) = ?', [$fecha_seleccionada]);
 
     $gasto_operativo_diario = $gasto_diario_base;
     $ganancia_neta_dia = $total_ventas_dia - $costo_total_bom_dia - $gasto_operativo_diario;
@@ -512,6 +481,7 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
             </div>
         </div>
 
+        <?php if ((int) ($_SESSION['rol_id'] ?? 0) !== 3): ?>
         <!-- FORMULARIO DE ARQUEO FÍSICO -->
         <div class="cash-box">
             <h3 style="margin-top: 0; color: #333;">🔒 Arqueo Físico y Cierre Diario</h3>
@@ -536,6 +506,9 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
                 <button type="submit" name="guardar_cierre" class="btn btn-success">💾 Guardar y Consolidar Cierre de Caja</button>
             </form>
         </div>
+        <?php else: ?>
+            <div class="alert-success"><strong>Modo consulta:</strong> el rol Supervisor puede revisar los datos diarios, pero no guardar ni consolidar cierres.</div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <!-- ======================================================= -->

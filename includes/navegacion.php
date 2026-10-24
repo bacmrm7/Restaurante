@@ -20,6 +20,9 @@ $es_admin = (int) $rol_actual === 1;
     <?php else: ?>
         <span class="nav-label">Producción</span>
         <nav class="side-nav">
+            <?php if ((int) $rol_actual === 3): ?>
+                <a class="side-link <?= $pagina_actual === 'index.php' ? 'active' : '' ?>" href="index.php" title="Consultar el inventario general"><span class="nav-mark">IN</span>Inventario</a>
+            <?php endif; ?>
             <a class="side-link <?= $pagina_actual === 'recetas.php' ? 'active' : '' ?>" href="recetas.php" title="Consultar las recetas disponibles"><span class="nav-mark">RE</span>Recetas</a>
         </nav>
     <?php endif; ?>
@@ -38,6 +41,7 @@ $es_admin = (int) $rol_actual === 1;
         <nav class="side-nav">
             <?php if ($es_admin): ?>
                 <a class="side-link <?= $pagina_actual === 'configuracion.php' ? 'active' : '' ?>" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a>
+                <a class="side-link <?= in_array($pagina_actual, ['rbac.php', 'control_accesos.php'], true) ? 'active' : '' ?>" href="control_accesos.php" title="Consultar roles y permisos"><span class="nav-mark">RB</span>Control de Accesos</a>
             <?php endif; ?>
             <a class="side-link logout" href="controllers/logout.php" title="Cerrar la sesión actual"><span class="nav-mark">↗</span>Cerrar sesión</a>
         </nav>

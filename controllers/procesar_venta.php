@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/seguridad.php';
-requerirRol([1, 2]); // Admin y Cajero
+requerirRol([1, 2, 3]); // Administrador, Cajero y Supervisor
 require_once __DIR__ . '/../config/conexion.php';
 
 // Asegurar compatibilidad con la variable de conexión existente

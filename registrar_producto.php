@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $codigo = trim($_POST['codigo']);
     $nombre = trim($_POST['nombre']);
     $descripcion = trim($_POST['descripcion']);
-    $es_combo = intval($_POST['es_combo']);
+    $es_combo = $tipo_registro === 'combo' ? 1 : intval($_POST['es_combo'] ?? 0);
     $tipo_registro = $es_combo === 1 ? 'combo' : 'producto';
 
     // Asignar valores según el tipo para evitar incongruencias contables
@@ -105,16 +105,21 @@ try {
         <div class="alert-error"><?= htmlspecialchars($error_db) ?></div>
     <?php endif; ?>
 
-    <form action="registrar_producto.php" method="POST">
+    <form action="registrar_producto.php<?= $tipo_registro === 'combo' ? '?tipo=combo' : '' ?>" method="POST">
         
         <!-- Selector de Tipo de Registro -->
         <div class="tipo-box">
             <div class="form-group" style="margin-bottom: 0;">
                 <label for="es_combo" style="color: #0056b3;">📌 Tipo de Registro:</label>
-                <select name="es_combo" id="es_combo" onchange="alternarCampos()" required>
-                    <option value="0" <?= $tipo_registro === 'producto' ? 'selected' : '' ?>>📦 Insumo / Materia Prima (Almacén)</option>
-                    <option value="1" <?= $tipo_registro === 'combo' ? 'selected' : '' ?>>🍗 Combo / Plato Final (Menú de Venta)</option>
-                </select>
+                <?php if ($tipo_registro === 'combo'): ?>
+                    <input type="hidden" name="es_combo" id="es_combo" value="1">
+                    <strong>🍗 Combo / Plato Final (Menú de Venta)</strong>
+                <?php else: ?>
+                    <select name="es_combo" id="es_combo" onchange="alternarCampos()" required>
+                        <option value="0" selected>📦 Insumo / Materia Prima (Almacén)</option>
+                        <option value="1">🍗 Combo / Plato Final (Menú de Venta)</option>
+                    </select>
+                <?php endif; ?>
             </div>
         </div>
 

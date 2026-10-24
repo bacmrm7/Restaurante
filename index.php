@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/seguridad.php';
-requerirRol([1]); // 1 = Solo Administrador
+requerirRol([1, 3]); // Administrador y Supervisor de solo lectura
 include __DIR__ . '/config/conexion.php';
+$rol_actual = (int) ($_SESSION['rol_id'] ?? 0);
+$es_admin = $rol_actual === 1;
 
 // Consultar insumos y materias primas para el inventario general.
 $sql = "SELECT p.*, c.nombre AS categoria_nombre 
@@ -153,22 +155,29 @@ foreach ($productos as $producto) {
         <span class="nav-label">Panel</span>
         <nav class="side-nav">
                     <a class="side-link active" href="index.php" aria-current="page" title="Consultar el inventario general"><span class="nav-mark">IN</span>Inventario</a>
-                    <a class="side-link" href="registrar_producto.php" title="Registrar un nuevo insumo"><span class="nav-mark">+</span>Nuevo insumo</a>
-                    <a class="side-link" href="recetas.php" title="Consultar y gestionar recetas"><span class="nav-mark">RE</span>Recetas</a>
-                    <a class="side-link" href="menu.php" title="Ver el menú y administrar combos"><span class="nav-mark">ME</span>Menú y combos</a>
+                    <?php if ($es_admin): ?>
+                        <a class="side-link" href="registrar_producto.php" title="Registrar un nuevo insumo"><span class="nav-mark">+</span>Nuevo insumo</a>
+                        <a class="side-link" href="recetas.php" title="Consultar y gestionar recetas"><span class="nav-mark">RE</span>Recetas</a>
+                        <a class="side-link" href="menu.php" title="Ver el menú y administrar combos"><span class="nav-mark">ME</span>Menú y combos</a>
+                    <?php else: ?>
+                        <a class="side-link" href="recetas.php" title="Consultar y operar recetas"><span class="nav-mark">RE</span>Recetas</a>
+                    <?php endif; ?>
         </nav>
 
         <span class="nav-label">Operaciones</span>
         <nav class="side-nav">
                     <a class="side-link" href="ventas.php" title="Registrar ventas en el punto de venta"><span class="nav-mark">PV</span>Punto de venta</a>
-                    <a class="side-link" href="gastos.php" title="Consultar y registrar gastos operativos"><span class="nav-mark">GA</span>Gastos operativos</a>
+                    <?php if ($es_admin): ?><a class="side-link" href="gastos.php" title="Consultar y registrar gastos operativos"><span class="nav-mark">GA</span>Gastos operativos</a><?php endif; ?>
                     <a class="side-link" href="cierre_caja.php" title="Consultar y consolidar cierres de caja"><span class="nav-mark">CJ</span>Cierre de caja</a>
                     <a class="side-link" href="reporte_ventas.php" title="Consultar el historial de ventas"><span class="nav-mark">RV</span>Reporte de ventas</a>
         </nav>
 
         <div class="sidebar-bottom">
             <nav class="side-nav">
-                    <a class="side-link" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a>
+                    <?php if ($es_admin): ?>
+                        <a class="side-link" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a>
+                        <a class="side-link" href="control_accesos.php" title="Consultar roles y permisos"><span class="nav-mark">RB</span>Control de Accesos</a>
+                    <?php endif; ?>
                     <a class="side-link logout" href="controllers/logout.php" title="Cerrar la sesión actual"><span class="nav-mark">↗</span>Cerrar sesión</a>
             </nav>
         </div>
@@ -178,12 +187,12 @@ foreach ($productos as $producto) {
         <div class="content">
             <header class="topbar">
                 <div>
-                    <p class="eyebrow">Administración</p>
+                    <p class="eyebrow"><?= $es_admin ? 'Administración' : 'Supervisión' ?></p>
                     <h1>Panel de control</h1>
                 </div>
                 <div class="topbar-meta">
                     <span class="today"><?= htmlspecialchars(date('d/m/Y')) ?></span>
-                    <span class="avatar" aria-label="Administrador">AD</span>
+                    <span class="avatar" aria-label="<?= $es_admin ? 'Administrador' : 'Supervisor' ?>"><?= $es_admin ? 'AD' : 'SU' ?></span>
                 </div>
             </header>
 
@@ -193,7 +202,7 @@ foreach ($productos as $producto) {
                     <h2 id="welcome-title">Todo en orden, desde un solo lugar.</h2>
                     <p>Consulta existencias y mantén tus insumos al día.</p>
                 </div>
-                <a class="primary-action" href="registrar_producto.php">+ Registrar insumo</a>
+                <?php if ($es_admin): ?><a class="primary-action" href="registrar_producto.php">+ Registrar insumo</a><?php endif; ?>
             </section>
 
             <section aria-labelledby="summary-title">
@@ -228,7 +237,7 @@ foreach ($productos as $producto) {
                         <h2 id="inventory-title">Inventario general</h2>
                         <p>Insumos y materias primas registrados</p>
                     </div>
-                    <a class="edit-link" href="registrar_producto.php">+ Agregar producto</a>
+                    <?php if ($es_admin): ?><a class="edit-link" href="registrar_producto.php">+ Agregar producto</a><?php endif; ?>
                 </div>
 
                 <div class="table-panel">
@@ -250,7 +259,7 @@ foreach ($productos as $producto) {
                                     <th>Stock actual</th>
                                     <th>Stock mín.</th>
                                     <th>Estado</th>
-                                    <th>Acción</th>
+                                    <?php if ($es_admin): ?><th>Acción</th><?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -273,12 +282,12 @@ foreach ($productos as $producto) {
                                                     <span class="status ok">Óptimo</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><a class="edit-link" href="editar_producto.php?id=<?= (int) $p['id'] ?>" title="Editar o reabastecer este producto">Editar</a></td>
+                                            <?php if ($es_admin): ?><td><a class="edit-link" href="editar_producto.php?id=<?= (int) $p['id'] ?>" title="Editar o reabastecer este producto">Editar</a></td><?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td class="empty-state" colspan="8">
+                                        <td class="empty-state" colspan="<?= $es_admin ? 8 : 7 ?>">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5zM4 7.5l8 4.7 8-4.7M12 12.2V21"/><path d="M8 5.2l8 4.6"/></svg>
                                             <strong>El inventario está vacío</strong>
                                             <span>Registra un insumo o materia prima para comenzar a controlar existencias.</span>

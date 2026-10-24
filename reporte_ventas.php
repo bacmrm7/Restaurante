@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/seguridad.php';
-requerirRol([1, 2]);
+requerirRol([1, 2, 3]);
 require_once __DIR__ . '/config/conexion.php';
 
 // Asegurar compatibilidad con la variable de conexión existente

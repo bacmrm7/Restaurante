@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/seguridad.php';
-requerirRol([1, 2]); // Admin (1) y Cajero/Supervisor (2)
+requerirRol([1, 2, 3]); // Administrador, Cajero y Supervisor
 include __DIR__ . '/config/conexion.php';
 
 // Obtener combos y productos directos disponibles para venta.
@@ -59,7 +59,7 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
     <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
     <div class="pos-navbar">
         <span class="pos-navbar-title">
-            👤 Usuario Activo: <?= $rol_actual == 1 ? 'Administrador (Rol 1)' : 'Cajero / Operador (Rol 2)' ?>
+            👤 Usuario Activo: <?= [1 => 'Administrador (Rol 1)', 2 => 'Cajero (Rol 2)', 3 => 'Supervisor (Rol 3)'][$rol_actual] ?? 'Operador' ?>
         </span>
         <div class="pos-nav-links">
             <a href="cierre_caja.php" class="btn-nav btn-cierre" title="Consultar el cierre de caja diario">📊 Mi Cierre Diario</a>
