@@ -115,6 +115,57 @@
         }
     }
 
+    function restoreLoadingState(form, submitter) {
+        const button = submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+        form.dataset.processing = 'false';
+        if (!button) return;
+        button.removeAttribute('aria-busy');
+        button.classList.remove('is-loading');
+        delete button.dataset.loading;
+        if (button.tagName === 'INPUT') {
+            if (button.dataset.originalValue !== undefined) button.value = button.dataset.originalValue;
+            delete button.dataset.originalValue;
+        } else if (button.dataset.originalHtml !== undefined) {
+            button.innerHTML = button.dataset.originalHtml;
+            delete button.dataset.originalHtml;
+        }
+    }
+
+    async function submitAjaxForm(form, submitter) {
+        setLoadingState(form, submitter);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 120000);
+        try {
+            const response = await fetch(form.action, {
+                method: (form.method || 'POST').toUpperCase(),
+                body: new FormData(form),
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                signal: controller.signal
+            });
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('El servidor devolvió una respuesta inesperada. Recarga la página e inténtalo otra vez.');
+            }
+            const result = await response.json();
+            if (!response.ok || result.success !== true) {
+                throw new Error(result.message || 'No se pudo completar la operación.');
+            }
+            showToast(result.message || 'Operación completada.');
+        } catch (error) {
+            const message = error.name === 'AbortError'
+                ? 'La operación tardó demasiado y se canceló la espera. Verifica el resultado antes de volver a intentarlo.'
+                : (error.message || 'No se pudo contactar con el servidor.');
+            showToast(message, 'error');
+        } finally {
+            window.clearTimeout(timeoutId);
+            restoreLoadingState(form, submitter);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         renderStatus();
 
@@ -148,6 +199,12 @@
                 return;
             }
             delete form.dataset.confirmed;
+            if (form.dataset.ajax === 'true') {
+                event.preventDefault();
+                submitAjaxForm(form, event.submitter);
+                return;
+            }
+            if (form.dataset.nativeSubmit === 'true') return;
             setLoadingState(form, event.submitter);
         }, true);
 

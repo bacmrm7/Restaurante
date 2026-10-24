@@ -92,7 +92,7 @@ if ($combo_seleccionado > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Recetas (BOM) - ERP Hijos del Rey</title>
+    <title>Gestión de Recetas (BOM) | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 1000px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -120,8 +120,10 @@ if ($combo_seleccionado > 0) {
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div class="header">
-        <h2>📖 Ficha Técnica y Recetas (BOM)</h2>
-        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
+        <div>
+            <h1 class="page-title">Ficha Técnica y Recetas</h1>
+            <p class="page-subtitle">Administra los insumos y cantidades que componen cada plato o combo.</p>
+        </div>
     </div>
 
     <?php if ($mensaje): ?>
@@ -189,6 +191,7 @@ if ($combo_seleccionado > 0) {
                         <span>Agrega insumos con sus cantidades desde el formulario de la izquierda.</span>
                     </div>
                 <?php else: ?>
+                    <div class="table-scroll">
                     <table>
                         <thead>
                             <tr>
@@ -219,6 +222,7 @@ if ($combo_seleccionado > 0) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

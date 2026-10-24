@@ -7,7 +7,7 @@ $roles = [
     [
         'nombre' => 'Administrador',
         'id' => 'Rol 1',
-        'nivel' => 'Control total del ERP',
+        'nivel' => 'Control total del sistema',
         'detalle' => 'Gestiona inventario, catálogo, recetas, ventas, caja y configuración.',
         'estado' => 'Activo',
         'tipo' => 'role-admin'
@@ -55,7 +55,7 @@ $badge = static function (string $estado): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Accesos y Roles | ERP Hijos del Rey</title>
+    <title>Control de Accesos y Roles | Hijos del Rey C.A.</title>
     <link rel="stylesheet" href="assets/app.css">
     <style>
         .rbac-page { max-width: 1320px; }
@@ -110,10 +110,10 @@ $badge = static function (string $estado): string {
     <header class="rbac-heading">
         <div>
             <p class="rbac-eyebrow">Seguridad del sistema</p>
-            <h1>Control de Accesos y Roles</h1>
-            <p>Modelo RBAC aplicado a la operación del restaurante.</p>
+            <h1 class="page-title">Control de Accesos y Roles</h1>
+            <p class="page-subtitle">Modelo de autorización aplicado a la operación del restaurante.</p>
         </div>
-        <span class="rbac-version">ERP Hijos del Rey · Administración</span>
+        <span class="rbac-version">Hijos del Rey C.A. · Administración</span>
     </header>
 
     <section class="rbac-overview" aria-labelledby="rbac-model-title">
@@ -160,7 +160,7 @@ $badge = static function (string $estado): string {
         <div class="rbac-table-wrap">
             <table class="rbac-table">
                 <thead>
-                    <tr><th>Módulo ERP</th><th>Administrador</th><th>Supervisor</th><th>Cajero</th></tr>
+                    <tr><th>Módulo</th><th>Administrador</th><th>Supervisor</th><th>Cajero</th></tr>
                 </thead>
                 <tbody>
                     <?php foreach ($permisos as $permiso): ?>

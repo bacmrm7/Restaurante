@@ -2,6 +2,9 @@
 require_once __DIR__ . '/includes/seguridad.php';
 requerirRol([1, 2, 3]); // Administrador, Cajero y Supervisor
 include __DIR__ . '/config/conexion.php';
+require_once __DIR__ . '/includes/configuracion_sistema.php';
+$config_sistema = obtenerConfiguracionSistema($conexion);
+$tasa_bcv = (float) $config_sistema['tasa_bcv'];
 
 // Obtener combos y productos directos disponibles para venta.
 try {
@@ -19,7 +22,7 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Punto de Venta - Hijos del Rey</title>
+    <title>Punto de Venta | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; margin: 0; }
         .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -33,9 +36,6 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         .box h4 { margin-top: 0; color: #333; font-size: 16px; }
         
         /* Estilos de la Barra Superior de Navegación Operativa */
-        .pos-navbar { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 12px 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ced4da; flex-wrap: wrap; gap: 10px; }
-        .pos-navbar-title { font-weight: bold; color: #333; font-size: 15px; }
-        .pos-nav-links { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .btn-nav { text-decoration: none; padding: 7px 12px; border-radius: 4px; font-weight: bold; font-size: 13px; color: white; display: inline-block; }
         .btn-cierre { background-color: #007bff; }
         .btn-cierre:hover { background-color: #0056b3; }
@@ -44,8 +44,6 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
         .btn-salir { background-color: #dc3545; }
         .btn-salir:hover { background-color: #c82333; }
 
-        .footer-nav { margin-top: 20px; text-align: center; }
-        .nav-link { text-decoration: none; font-weight: bold; font-size: 14px; color: #007bff; }
         .alert-success { background-color: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb; }
     </style>
@@ -56,19 +54,12 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
 
-    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
-    <div class="pos-navbar">
-        <span class="pos-navbar-title">
-            👤 Usuario Activo: <?= [1 => 'Administrador (Rol 1)', 2 => 'Cajero (Rol 2)', 3 => 'Supervisor (Rol 3)'][$rol_actual] ?? 'Operador' ?>
-        </span>
-        <div class="pos-nav-links">
-            <a href="cierre_caja.php" class="btn-nav btn-cierre" title="Consultar el cierre de caja diario">📊 Mi Cierre Diario</a>
-            <a href="reporte_ventas.php" class="btn-nav btn-reporte" title="Consultar los tickets de venta">📄 Reporte de Tickets</a>
-            <a href="controllers/logout.php" class="btn-nav btn-salir" title="Cerrar la sesión actual">🚪 Cerrar Sesión</a>
+    <header class="module-heading">
+        <div class="module-heading-copy">
+            <h1 class="page-title">Punto de Venta</h1>
+            <p class="page-subtitle">Selecciona productos, calcula el importe y registra el pago de la venta.</p>
         </div>
-    </div>
-
-    <h2>🧾 Registrar Venta / Salida por Combo (Punto de Venta)</h2>
+    </header>
 
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'venta_exitosa'): ?>
         <div class="alert-success">✅ Venta procesada correctamente. Se han descontado los insumos de la receta del inventario.</div>
@@ -130,6 +121,7 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
             <div class="form-group">
                 <label id="lbl_monto_pagado" for="monto_pagado_input">Monto Pagado ($):</label>
                 <input type="text" name="pagos[0][monto]" id="monto_pagado_input" value="0.00" required>
+                <?php if ($tasa_bcv > 0): ?><small class="settings-help">Tasa BCV activa: Bs. <?= number_format($tasa_bcv, 4, ',', '.') ?> por dólar.</small><?php endif; ?>
             </div>
             <div class="form-group">
                 <label for="referencia_input">Número de Referencia (Opcional):</label>
@@ -141,11 +133,6 @@ $rol_actual = $_SESSION['rol_id'] ?? null;
             ✅ Procesar Venta y Descontar Receta de Inventario
         </button>
 
-        <?php if ($rol_actual == 1): ?>
-            <div class="footer-nav">
-                <a href="index.php" class="nav-link">← Volver al Inventario General</a>
-            </div>
-        <?php endif; ?>
     </form>
 </div>
 
@@ -178,10 +165,9 @@ function actualizarMonedaPago() {
 
     if (metodo === 'Efectivo Bs' || metodo === 'Pago Movil' || metodo === 'Punto') {
         lblMonto.innerText = 'Monto Pagado (Bs):';
-        if (montoInput.value === totalDolares.toFixed(2)) {
-            montoInput.value = '';
-        }
-        montoInput.placeholder = 'Ej: 360.00 (Monto exacto en Bolívares)';
+        const tasaBcv = <?= json_encode($tasa_bcv) ?>;
+        montoInput.value = tasaBcv > 0 ? (totalDolares * tasaBcv).toFixed(2) : '';
+        montoInput.placeholder = tasaBcv > 0 ? 'Monto convertido a bolívares' : 'Indica primero la tasa BCV en Configuración';
     } else {
         lblMonto.innerText = 'Monto Pagado ($):';
         montoInput.value = totalDolares.toFixed(2);

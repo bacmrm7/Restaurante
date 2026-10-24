@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('America/Caracas');
+
 $host = '127.0.0.1';
 $username = 'root';
 $password = '';
@@ -16,7 +18,7 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Función para auditoría de eventos (Ahora apunta a erp_seguridad)
+// Función para auditoría de eventos en la base de datos de seguridad
 function registrarLog($conexion_seguridad, $usuario_id, $accion, $detalles = null) {
     try {
         $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';

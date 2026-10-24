@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../includes/seguridad.php';
 requerirRol([1, 2, 3]); // Administrador, Cajero y Supervisor
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/configuracion_sistema.php';
+$config_sistema = obtenerConfiguracionSistema($conexion);
 
 // Asegurar compatibilidad con la variable de conexión existente
 if (!isset($pdo)) {
@@ -165,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Venta Exitosa - ERP Hijos del Rey</title>
+            <title>Venta Exitosa | Hijos del Rey C.A.</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
                 .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
@@ -179,11 +181,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </head>
         <body data-toast-success="Venta procesada correctamente.">
             <div class="card">
-                <h2>¡Venta Procesada con Éxito!</h2>
-                <p>El inventario y el Kardex se han actualizado automáticamente.</p>
+                <h1 class="page-title">Venta procesada con éxito</h1>
+                <p class="page-subtitle">El inventario y el Kardex se han actualizado automáticamente.</p>
+                <div class="receipt-heading">
+                    <strong><?= htmlspecialchars($config_sistema['nombre_comercial']) ?></strong>
+                    <?php if ($config_sistema['ticket_encabezado'] !== ''): ?><span><?= nl2br(htmlspecialchars($config_sistema['ticket_encabezado'])) ?></span><?php endif; ?>
+                    <?php if ($config_sistema['rif'] !== ''): ?><span>RIF: <?= htmlspecialchars($config_sistema['rif']) ?></span><?php endif; ?>
+                    <?php if ($config_sistema['direccion'] !== ''): ?><span><?= htmlspecialchars($config_sistema['direccion']) ?></span><?php endif; ?>
+                    <?php if ($config_sistema['telefono'] !== ''): ?><span><?= htmlspecialchars($config_sistema['telefono']) ?></span><?php endif; ?>
+                </div>
                 <div class="factura-box">
                     Nro. de Factura: <?= htmlspecialchars($codigo_factura) ?>
                 </div>
+                <?php if ($config_sistema['ticket_pie'] !== ''): ?><p class="receipt-footer"><?= nl2br(htmlspecialchars($config_sistema['ticket_pie'])) ?></p><?php endif; ?>
                 <a href="../ventas.php" class="btn">🛒 Realizar Otra Venta</a>
             </div>
             <script src="../assets/app-ui.js" defer></script>
@@ -200,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Error en Venta - ERP Hijos del Rey</title>
+            <title>Error en Venta | Hijos del Rey C.A.</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
                 .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
@@ -212,7 +222,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </head>
         <body>
             <div class="card">
-                <h2>¡Error al Procesar!</h2>
+                <h1 class="page-title">No se pudo procesar la venta</h1>
+                <p class="page-subtitle">La operación no se completó. Revisa el detalle antes de volver a intentarlo.</p>
                 <p><?= htmlspecialchars($e->getMessage()) ?></p>
                 <a href="../ventas.php" class="btn">Regresar al POS</a>
             </div>

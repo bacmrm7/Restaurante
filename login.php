@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - ERP Hijos del Rey</title>
+    <title>Iniciar Sesión | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
@@ -69,7 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="login-card">
-        <h2>ERP Hijos del Rey</h2>
+        <h1 class="page-title">Iniciar sesión</h1>
+        <p class="page-subtitle">Accede a la gestión de inventario y operaciones.</p>
         <?php if (!empty($error)): ?>
             <div class="error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>

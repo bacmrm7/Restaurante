@@ -46,7 +46,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Ventas - ERP Hijos del Rey</title>
+    <title>Reporte de Ventas | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -56,7 +56,6 @@ try {
         th, td { padding: 12px; border: 1px solid #dee2e6; text-align: left; font-size: 14px; }
         th { background-color: #007bff; color: white; }
         tr:nth-child(even) { background-color: #f8f9fa; }
-        .footer-nav { margin-top: 25px; text-align: center; display: flex; justify-content: center; gap: 20px; }
         .btn { text-decoration: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; font-size: 14px; display: inline-block; }
         .btn-primary { background-color: #007bff; color: white; }
         .btn-primary:hover { background-color: #0056b3; }
@@ -70,10 +69,12 @@ try {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <h2>
-        📊 Reporte General de Ventas
-        <span style="font-size: 14px; font-weight: normal; color: #555;">ERP Hijos del Rey</span>
-    </h2>
+    <header class="module-heading">
+        <div class="module-heading-copy">
+            <h1 class="page-title">Reporte General de Ventas</h1>
+            <p class="page-subtitle">Consulta el detalle de las transacciones y métodos de pago registrados.</p>
+        </div>
+    </header>
 
     <?php if ($error_db): ?>
         <div class="alert-danger">Error de Base de Datos: <?= htmlspecialchars($error_db) ?></div>
@@ -86,6 +87,7 @@ try {
         </label>
         <span class="table-search-status" aria-live="polite"></span>
     </div>
+    <div class="table-panel table-scroll">
     <table id="sales-table">
         <thead>
             <tr>
@@ -133,11 +135,8 @@ try {
             <?php endif; ?>
         </tbody>
     </table>
-
-    <div class="footer-nav">
-        <a href="index.php" class="btn btn-primary" title="Volver al inventario general">← Volver al Inventario General</a>
-        <a href="controllers/logout.php" class="btn btn-danger" title="Cerrar la sesión actual">🚪 Cerrar Sesión</a>
     </div>
+
 </div>
 
 </body>

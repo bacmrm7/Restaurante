@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar / Reabastecer Producto - ERP Hijos del Rey</title>
+    <title>Editar / Reabastecer Producto | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 600px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -146,7 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <h2><?= $es_combo ? 'Editar Combo / Plato' : 'Editar / Reabastecer Producto' ?></h2>
+    <header class="header">
+        <div>
+            <h1 class="page-title"><?= $es_combo ? 'Editar Combo / Plato' : 'Editar / Reabastecer Producto' ?></h1>
+            <p class="page-subtitle"><?= $es_combo ? 'Actualiza la información comercial del plato o combo.' : 'Modifica los datos del producto y registra su abastecimiento.' ?></p>
+        </div>
+    </header>
 
     <?php if (!empty($error)): ?>
         <div class="alert-danger"><?= htmlspecialchars($error) ?></div>

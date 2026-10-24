@@ -59,7 +59,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Producto - ERP Hijos del Rey</title>
+    <title>Registrar Producto | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 600px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -72,8 +72,6 @@ try {
         .row .form-group { flex: 1; }
         button { background-color: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:hover { background-color: #218838; }
-        .back-link { display: block; text-align: center; margin-top: 15px; color: #007bff; text-decoration: none; font-weight: bold; }
-        .back-link:hover { text-decoration: underline; }
         .alert-error { background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb; font-size: 14px; }
         .tipo-box { background-color: #e9ecef; padding: 15px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 15px; }
         .oculto { display: none; }
@@ -99,13 +97,18 @@ try {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <h2><?= $tipo_registro === 'combo' ? 'Registrar Nuevo Combo' : 'Registrar Nuevo Producto' ?></h2>
+    <header class="module-heading">
+        <div class="module-heading-copy">
+            <h1 class="page-title"><?= $tipo_registro === 'combo' ? 'Registrar Nuevo Combo' : 'Registrar Nuevo Producto' ?></h1>
+            <p class="page-subtitle"><?= $tipo_registro === 'combo' ? 'Define el plato y sus datos comerciales para el menú.' : 'Registra un insumo o materia prima en el catálogo de inventario.' ?></p>
+        </div>
+    </header>
 
     <?php if (isset($error_db)): ?>
         <div class="alert-error"><?= htmlspecialchars($error_db) ?></div>
     <?php endif; ?>
 
-    <form action="registrar_producto.php<?= $tipo_registro === 'combo' ? '?tipo=combo' : '' ?>" method="POST">
+    <form class="form-panel" action="registrar_producto.php<?= $tipo_registro === 'combo' ? '?tipo=combo' : '' ?>" method="POST">
         
         <!-- Selector de Tipo de Registro -->
         <div class="tipo-box">
@@ -179,7 +182,6 @@ try {
         <button type="submit">Guardar Producto</button>
     </form>
 
-    <a href="<?= $tipo_registro === 'combo' ? 'menu.php' : 'index.php' ?>" class="back-link">← Volver al <?= $tipo_registro === 'combo' ? 'Menú de Combos' : 'Inventario General' ?></a>
 </div>
 
 </body>

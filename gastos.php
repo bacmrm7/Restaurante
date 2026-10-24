@@ -69,7 +69,7 @@ foreach ($gastos as $g) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gastos Operativos - ERP Hijos del Rey</title>
+    <title>Gastos Operativos | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 1200px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -97,10 +97,12 @@ foreach ($gastos as $g) {
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
-        <h2>💸 Control de Gastos Operativos (Fijos / Variables)</h2>
-        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
-    </div>
+    <header class="module-heading">
+        <div class="module-heading-copy">
+            <h1 class="page-title">Control de Gastos Operativos</h1>
+            <p class="page-subtitle">Registra costos y consulta su frecuencia e impacto mensual estimado.</p>
+        </div>
+    </header>
 
     <?php if ($mensaje): ?>
         <div class="alert-success" style="margin-top: 15px;"><?= htmlspecialchars($mensaje) ?></div>
@@ -146,7 +148,7 @@ foreach ($gastos as $g) {
         </div>
 
         <!-- Tabla e Historial de Gastos -->
-        <div>
+        <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin: 0; color: #333;">Historial de Gastos</h3>
                 <span style="font-size: 15px; font-weight: bold; color: #721c24; background: #f8d7da; padding: 6px 12px; border-radius: 4px; border: 1px solid #f5c6cb;">
@@ -161,6 +163,7 @@ foreach ($gastos as $g) {
                 </label>
                 <span class="table-search-status" aria-live="polite"></span>
             </div>
+            <div class="table-panel table-scroll">
             <table id="expenses-table">
                 <thead>
                     <tr>
@@ -212,6 +215,7 @@ foreach ($gastos as $g) {
                     <?php endif; ?>
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 </div>

@@ -12,7 +12,7 @@ $es_admin = isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 1;
 // Modo de vista: Si es admin respeta el GET; si es cajero se le fuerza estrictamente a 'dia'
 $modo = $es_admin ? (isset($_GET['modo']) ? $_GET['modo'] : 'dia') : 'dia';
 
-$fecha_seleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
+$fecha_seleccionada = !empty($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
 
 // Rango para la vista semanal (Solo accesible para Admin)
 $fecha_desde = isset($_GET['fecha_desde']) ? $_GET['fecha_desde'] : date('Y-m-d', strtotime('-3 days'));
@@ -238,7 +238,7 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cierre y Control Financiero - Hijos del Rey</title>
+    <title>Cierre y Control Financiero | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 1000px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -286,12 +286,10 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
     <div class="header">
-        <h2>📊 Cierre de Caja y Control Financiero</h2>
-        <nav class="quick-nav" aria-label="Accesos rápidos">
-            <a href="reporte_ventas.php" class="btn btn-secondary">Tickets</a>
-            <a href="ventas.php" class="btn btn-secondary">Punto de Venta</a>
-            <a href="<?= $es_admin ? 'index.php' : 'ventas.php' ?>" class="btn btn-primary">Volver</a>
-        </nav>
+        <div>
+            <h1 class="page-title">Cierre de Caja y Control Financiero</h1>
+            <p class="page-subtitle">Consulta ventas, gastos y arqueos consolidados por período.</p>
+        </div>
     </div>
 
     <?php if ($mensaje): ?>
@@ -305,12 +303,12 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
     <?php if ($es_admin): ?>
         <div class="mode-selector">
             <a href="cierre_caja.php?modo=dia" class="mode-btn <?= $modo === 'dia' ? 'active' : '' ?>">📅 Arqueo Diario</a>
-            <a href="cierre_caja.php?modo=semana" class="mode-btn <?= $modo === 'semana' ? 'active' : '' ?>">🗓️ Fin de Semana (4 Días)</a>
+            <a href="cierre_caja.php?modo=semana" class="mode-btn <?= $modo === 'semana' ? 'active' : '' ?>">🗓️ Fin de Semana</a>
             <a href="cierre_caja.php?modo=mes" class="mode-btn <?= $modo === 'mes' ? 'active' : '' ?>">📈 Consolidado Mensual</a>
         </div>
     <?php else: ?>
         <div style="background: #e9ecef; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #495057;">
-            🔒 Módulo Operativo: Arqueo y Cierre Diario de Caja (Cajero)
+            🔒 Módulo Operativo: Arqueo y Cierre Diario de Caja
         </div>
     <?php endif; ?>
 
@@ -349,38 +347,38 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
 
         <div class="desglose-box">
             <div class="desglose-item">
-                <strong>💵 Efectivo USD (Mes)</strong>
+                <strong>💵 Efectivo USD del Mes</strong>
                 <span>$<?= number_format($usd_periodo, 2) ?></span>
             </div>
             <div class="desglose-item">
-                <strong>⚡ Zelle (Mes)</strong>
+                <strong>⚡ Zelle del Mes</strong>
                 <span>$<?= number_format($zelle_periodo, 2) ?></span>
             </div>
             <div class="desglose-item">
-                <strong>🇻🇪 Efectivo Bs (Mes)</strong>
+                <strong>🇻🇪 Efectivo Bs del Mes</strong>
                 <span>Bs. <?= number_format($bs_periodo, 2) ?></span>
             </div>
             <div class="desglose-item">
-                <strong>💳 P.Móvil / Punto (Mes)</strong>
+                <strong>💳 P.Móvil / Punto del Mes</strong>
                 <span>Bs. <?= number_format($pago_movil_periodo, 2) ?></span>
             </div>
         </div>
 
         <div class="grid-metrics">
             <div class="metric-card">
-                <h4>(+) Ventas Totales del Mes</h4>
+                <h4>+ Ventas Totales del Mes</h4>
                 <span style="color: #007bff;">$<?= number_format($total_ventas_periodo, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #dc3545;">
-                <h4>(-) Costo de Ventas (BOM Acumulado)</h4>
+                <h4>− Costo de Ventas, BOM acumulado</h4>
                 <span style="color: #dc3545;">$<?= number_format($costo_total_bom_periodo, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #ffc107;">
-                <h4>(-) Gastos Operativos (16 días laborables)</h4>
+                <h4>− Gastos Operativos, 16 días laborables</h4>
                 <span style="color: #d39e00;">$<?= number_format($total_gasto_operativo_periodo, 2) ?></span>
             </div>
             <div class="metric-card net-card">
-                <h4>(=) Ganancia Neta Real del Mes</h4>
+                <h4>= Ganancia Neta Real del Mes</h4>
                 <span>$<?= number_format($ganancia_neta_periodo, 2) ?></span>
             </div>
         </div>
@@ -417,19 +415,19 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
 
         <div class="grid-metrics">
             <div class="metric-card">
-                <h4>(+) Ventas Totales del Ciclo</h4>
+                <h4>+ Ventas Totales del Ciclo</h4>
                 <span style="color: #007bff;">$<?= number_format($total_ventas_periodo, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #dc3545;">
-                <h4>(-) Costo de Ventas (BOM Ciclo)</h4>
+                <h4>− Costo de Ventas, BOM del ciclo</h4>
                 <span style="color: #dc3545;">$<?= number_format($costo_total_bom_periodo, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #ffc107;">
-                <h4>(-) Gastos Operativos (<?= $dias_diferencia ?> días)</h4>
+                <h4>− Gastos Operativos, <?= $dias_diferencia ?> días</h4>
                 <span style="color: #d39e00;">$<?= number_format($total_gasto_operativo_periodo, 2) ?></span>
             </div>
             <div class="metric-card net-card">
-                <h4>(=) Ganancia Neta del Ciclo</h4>
+                <h4>= Ganancia Neta del Ciclo</h4>
                 <span>$<?= number_format($ganancia_neta_periodo, 2) ?></span>
             </div>
         </div>
@@ -449,7 +447,7 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
                 <span>$<?= number_format($efectivo_usd_esperado, 2) ?></span>
             </div>
             <div class="desglose-item">
-                <strong>⚡ Zelle (USD)</strong>
+                <strong>⚡ Zelle en USD</strong>
                 <span>$<?= number_format($zelle_esperado, 2) ?></span>
             </div>
             <div class="desglose-item">
@@ -464,19 +462,19 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
 
         <div class="grid-metrics">
             <div class="metric-card">
-                <h4>(+) Ventas Totales del Día</h4>
+                <h4>+ Ventas Totales del Día</h4>
                 <span style="color: #007bff;">$<?= number_format($total_ventas_dia, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #dc3545;">
-                <h4>(-) Costo de Ventas (BOM / Insumos)</h4>
+                <h4>− Costo de Ventas, BOM e insumos</h4>
                 <span style="color: #dc3545;">$<?= number_format($costo_total_bom_dia, 2) ?></span>
             </div>
             <div class="metric-card" style="border-left-color: #ffc107;">
-                <h4>(-) Gastos Operativos (Cuota Día)</h4>
+                <h4>− Gastos Operativos del Día</h4>
                 <span style="color: #d39e00;">$<?= number_format($gasto_operativo_diario, 2) ?></span>
             </div>
             <div class="metric-card net-card">
-                <h4>(=) Ganancia Neta Real</h4>
+                <h4>= Ganancia Neta Real</h4>
                 <span>$<?= number_format($ganancia_neta_dia, 2) ?></span>
             </div>
         </div>
@@ -518,6 +516,7 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
         <h3 style="color: #333; margin-bottom: 15px;">📜 Histórico de Cierres Auditados Guardados</h3>
         
         <?php if (count($cierres_guardados) > 0): ?>
+            <div class="table-panel table-scroll">
             <table>
                 <thead>
                     <tr>
@@ -564,6 +563,7 @@ $cierres_guardados = $stmtHistorico ? $stmtHistorico->fetchAll(PDO::FETCH_ASSOC)
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php else: ?>
             <div class="empty-state empty-state-panel">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h4"/><path d="M8 3v2m8-2v2"/></svg>

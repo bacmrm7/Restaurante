@@ -20,6 +20,7 @@ function requerirAutenticacion() {
 
 // 2. Verifica si el rol del usuario tiene permiso para acceder
 function requerirRol($roles_permitidos = []) {
+    global $ruta_base;
     requerirAutenticacion();
     
     // Obtener el rol de la sesión actual
@@ -32,7 +33,7 @@ function requerirRol($roles_permitidos = []) {
         <head>
             <meta charset='UTF-8'>
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Acceso Restringido - ERP Hijos del Rey</title>
+            <title>Acceso Restringido | Hijos del Rey C.A.</title>
             <style>
                 body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
                 .card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 480px; width: 100%; }
@@ -50,8 +51,8 @@ function requerirRol($roles_permitidos = []) {
         </head>
         <body>
             <div class='card'>
-                <h1>⚠️ 403 - Acceso Restringido</h1>
-                <p>Tu rol de usuario no tiene los privilegios necesarios para acceder a este módulo del sistema de <strong>Hijos del Rey</strong>.</p>
+                <h1 class='page-title'>403 - Acceso Restringido</h1>
+                <p class='page-subtitle'>Tu rol no tiene permisos para acceder a este módulo.</p>
                 <div class='actions'>
                     <a href='ventas.php' class='btn btn-primary'>💳 Ir al Módulo POS</a>
                     <a href='{$ruta_base}/controllers/logout.php' class='btn btn-secondary'>🚪 Cerrar Sesión</a>

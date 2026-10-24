@@ -17,7 +17,7 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú de Combos - ERP Hijos del Rey</title>
+    <title>Menú de Combos | Hijos del Rey C.A.</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
         .container { max-width: 1100px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
@@ -41,14 +41,15 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <?php include __DIR__ . '/includes/navegacion.php'; ?>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
-        <h2>🍗 Menú de Combos (Venta al Público)</h2>
-        <a href="index.php" class="btn btn-secondary" title="Volver al inventario general">← Volver al Inventario</a>
-    </div>
+    <header class="module-heading">
+        <div class="module-heading-copy">
+            <h1 class="page-title">Menú de Combos</h1>
+            <p class="page-subtitle">Gestiona los platos disponibles y sus precios de venta.</p>
+        </div>
+    </header>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <div class="module-actions">
         <a href="registrar_producto.php?tipo=combo" class="btn btn-success" title="Registrar un nuevo combo o plato">+ Nuevo Combo / Plato</a>
-        <a href="recetas.php" class="btn" style="background-color: #17a2b8;" title="Ver y configurar las recetas de los combos">📖 Configurar Recetas (BOM)</a>
     </div>
 
     <div class="table-tools">
@@ -58,6 +59,7 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </label>
         <span class="table-search-status" aria-live="polite"></span>
     </div>
+    <div class="table-panel table-scroll">
     <table id="menu-table">
         <thead>
             <tr>
@@ -105,6 +107,7 @@ $combos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 </body>

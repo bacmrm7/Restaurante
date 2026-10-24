@@ -31,7 +31,7 @@ foreach ($productos as $producto) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | ERP Hijos del Rey</title>
+    <title>Panel de control | Hijos del Rey C.A.</title>
     <style>
         :root {
             color-scheme: light;
@@ -54,7 +54,7 @@ foreach ($productos as $producto) {
         .app-shell { min-height: 100vh; }
         .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 5; display: flex; width: 254px; flex-direction: column; padding: 28px 18px 18px; background: var(--forest); color: #f5f7f3; }
         .brand { display: flex; align-items: center; gap: 12px; padding: 0 10px 30px; }
-        .brand-mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: var(--lime); color: var(--forest); font-size: 16px; font-weight: 900; }
+        .brand-logo { display: block; width: auto; height: 40px; max-width: 140px; flex: 0 1 auto; object-fit: contain; }
         .brand-name { font-size: 14px; font-weight: 750; line-height: 1.2; }
         .brand-subtitle { display: block; margin-top: 4px; color: #a9b9ae; font-size: 10px; font-weight: 600; }
         .nav-label { padding: 0 11px; margin: 13px 0 8px; color: #91a59a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
@@ -148,8 +148,8 @@ foreach ($productos as $producto) {
 <div class="app-shell">
     <aside class="sidebar" aria-label="Navegación principal">
         <div class="brand">
-            <span class="brand-mark">HR</span>
-            <span class="brand-name">Hijos del Rey<span class="brand-subtitle">GESTIÓN DE NEGOCIO</span></span>
+                    <img class="brand-logo" src="<?= htmlspecialchars($ruta_base . '/assets/img/logo.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo Hijos del Rey C.A.">
+            <span class="brand-name">Hijos del Rey C.A.<span class="brand-subtitle">GESTIÓN DE NEGOCIO</span></span>
         </div>
 
         <span class="nav-label">Panel</span>
@@ -187,18 +187,14 @@ foreach ($productos as $producto) {
         <div class="content">
             <header class="topbar">
                 <div>
-                    <p class="eyebrow"><?= $es_admin ? 'Administración' : 'Supervisión' ?></p>
-                    <h1>Panel de control</h1>
-                </div>
-                <div class="topbar-meta">
-                    <span class="today"><?= htmlspecialchars(date('d/m/Y')) ?></span>
-                    <span class="avatar" aria-label="<?= $es_admin ? 'Administrador' : 'Supervisor' ?>"><?= $es_admin ? 'AD' : 'SU' ?></span>
+                    <h1 class="page-title">Panel de control</h1>
+                    <p class="page-subtitle">Consulta existencias y supervisa el estado de los insumos registrados.</p>
                 </div>
             </header>
 
             <section class="welcome" aria-labelledby="welcome-title">
                 <div class="welcome-copy">
-                    <p class="welcome-kicker">Hijos del Rey · Inventario</p>
+                    <p class="welcome-kicker">Hijos del Rey C.A. · Inventario</p>
                     <h2 id="welcome-title">Todo en orden, desde un solo lugar.</h2>
                     <p>Consulta existencias y mantén tus insumos al día.</p>
                 </div>
