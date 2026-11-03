@@ -6,7 +6,6 @@ $es_admin = (int) $rol_actual === 1;
 <aside class="sidebar" aria-label="Navegación principal">
     <div class="brand">
         <img class="brand-logo" src="<?= htmlspecialchars($ruta_base . '/assets/img/logo.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo Hijos del Rey C.A.">
-        <span class="brand-name">Hijos del Rey C.A.<span class="brand-subtitle">GESTIÓN DE NEGOCIO</span></span>
     </div>
 
     <?php if ($es_admin): ?>

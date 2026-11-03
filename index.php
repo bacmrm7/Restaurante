@@ -55,8 +55,6 @@ foreach ($productos as $producto) {
         .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 5; display: flex; width: 254px; flex-direction: column; padding: 28px 18px 18px; background: var(--forest); color: #f5f7f3; }
         .brand { display: flex; align-items: center; gap: 12px; padding: 0 10px 30px; }
         .brand-logo { display: block; width: auto; height: 40px; max-width: 140px; flex: 0 1 auto; object-fit: contain; }
-        .brand-name { font-size: 14px; font-weight: 750; line-height: 1.2; }
-        .brand-subtitle { display: block; margin-top: 4px; color: #a9b9ae; font-size: 10px; font-weight: 600; }
         .nav-label { padding: 0 11px; margin: 13px 0 8px; color: #91a59a; font-size: 10px; font-weight: 800; text-transform: uppercase; }
         .side-nav { display: grid; gap: 4px; }
         .side-link { display: flex; min-height: 42px; align-items: center; gap: 12px; padding: 0 11px; border-radius: 7px; color: #d2ddd5; font-size: 13px; font-weight: 600; text-decoration: none; transition: background-color .16s ease, color .16s ease; }
@@ -149,7 +147,6 @@ foreach ($productos as $producto) {
     <aside class="sidebar" aria-label="Navegación principal">
         <div class="brand">
                     <img class="brand-logo" src="<?= htmlspecialchars($ruta_base . '/assets/img/logo.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo Hijos del Rey C.A.">
-            <span class="brand-name">Hijos del Rey C.A.<span class="brand-subtitle">GESTIÓN DE NEGOCIO</span></span>
         </div>
 
         <span class="nav-label">Panel</span>
