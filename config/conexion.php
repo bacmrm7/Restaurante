@@ -32,7 +32,7 @@ if (!function_exists('registrarLog')) {
     function registrarLog($conexion_seguridad, $usuario_id, $accion, $detalles = null) {
         try {
             $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-            $stmt = $conexion_seguridad->prepare("INSERT INTO logs_auditoria (usuario_id, accion, detalles, ip_origen) VALUES (?, ?, ?, ?)");
+            $stmt = $conexion_seguridad->prepare("INSERT INTO erp_seguridad.logs_auditoria (usuario_id, accion, detalles, ip_origen) VALUES (?, ?, ?, ?)");
             $stmt->execute([$usuario_id, $accion, $detalles, $ip]);
         } catch (Exception $e) {
             // Manejo silencioso o log de errores

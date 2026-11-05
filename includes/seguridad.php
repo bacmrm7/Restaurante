@@ -38,7 +38,7 @@ function tiene_permiso(string $nombreModulo): bool {
     }
 
     $marcadores = implode(',', array_fill(0, count($rolesUsuario), '?'));
-    $consultaAcceso = $db->prepare("SELECT COALESCE(MAX(acceso.habilitado), 0) FROM modulo AS modulo LEFT JOIN r_modulo_rol AS acceso ON acceso.modulo_id = modulo.id AND acceso.rol_id IN ($marcadores) WHERE modulo.nombre_modulo = ?");
+        $consultaAcceso = $db->prepare("SELECT COALESCE(MAX(accesos.habilitado), 0) FROM erp_seguridad.modulos AS modulos LEFT JOIN erp_seguridad.r_modulo_rol AS accesos ON accesos.modulo_id = modulos.id AND accesos.rol_id IN ($marcadores) WHERE modulos.nombre = ?");
     $consultaAcceso->execute(array_merge($rolesUsuario, [$nombreModulo]));
     return (bool) $consultaAcceso->fetchColumn();
 }

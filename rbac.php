@@ -17,10 +17,10 @@ $modulosBase = [
 ];
 
 $asegurarColumna = static function (PDO $db, string $tabla, string $columna, string $definicion): void {
-    $consulta = $db->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
-    $consulta->execute([$tabla, $columna]);
+    $consulta = $db->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $consulta->execute(['erp_seguridad', $tabla, $columna]);
     if ((int) $consulta->fetchColumn() === 0) {
-        $db->exec("ALTER TABLE `$tabla` ADD COLUMN `$columna` $definicion");
+        $db->exec("ALTER TABLE erp_seguridad.`$tabla` ADD COLUMN `$columna` $definicion");
     }
 };
 
@@ -29,8 +29,9 @@ $asegurarColumna($conexion_seguridad, 'roles', 'nivel_acceso', 'VARCHAR(120) NUL
 $asegurarColumna($conexion_seguridad, 'roles', 'estado', "ENUM('activo','inactivo') NOT NULL DEFAULT 'activo' AFTER `nivel_acceso`");
 
 foreach ($modulosBase as $indice => [$nombreModulo, $descripcionModulo]) {
-    $stmt = $conexion_seguridad->prepare('INSERT INTO modulo (nombre_modulo, descripcion, orden) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion), orden = VALUES(orden)');
-    $stmt->execute([$nombreModulo, $descripcionModulo, $indice + 1]);
+    $claveModulo = strtolower(str_replace(' ', '_', $nombreModulo));
+    $stmt = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.modulos (nombre, clave, descripcion, orden) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), descripcion = VALUES(descripcion), orden = VALUES(orden)');
+    $stmt->execute([$nombreModulo, $claveModulo, $descripcionModulo, $indice + 1]);
 }
 
 $error = '';
@@ -60,16 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 throw new RuntimeException('Ingresa un correo electrónico válido.');
             }
-            $validarRoles = $conexion_seguridad->prepare('SELECT id FROM roles WHERE id IN (' . implode(',', array_fill(0, count($rolesSeleccionados), '?')) . ')');
+            $validarRoles = $conexion_seguridad->prepare('SELECT id FROM erp_seguridad.roles WHERE id IN (' . implode(',', array_fill(0, count($rolesSeleccionados), '?')) . ')');
             $validarRoles->execute($rolesSeleccionados);
             if (count($validarRoles->fetchAll(PDO::FETCH_COLUMN)) !== count($rolesSeleccionados)) {
                 throw new RuntimeException('Uno o más roles seleccionados ya no existen.');
             }
             $conexion_seguridad->beginTransaction();
-            $insertarUsuario = $conexion_seguridad->prepare('INSERT INTO usuarios (username, nombre_completo, password, email, rol_id, estado) VALUES (?, ?, ?, ?, ?, ?)');
+            $insertarUsuario = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.usuarios (username, nombre_completo, password, email, rol_id, estado) VALUES (?, ?, ?, ?, ?, ?)');
             $insertarUsuario->execute([$username, $nombre, password_hash($password, PASSWORD_DEFAULT), $email !== '' ? $email : null, $rolesSeleccionados[0], 'activo']);
             $usuarioNuevo = (int) $conexion_seguridad->lastInsertId();
-            $insertarRol = $conexion_seguridad->prepare('INSERT INTO r_usuario_rol (usuario_id, rol_id) VALUES (?, ?)');
+            $insertarRol = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.r_usuario_rol (usuario_id, rol_id) VALUES (?, ?)');
             foreach ($rolesSeleccionados as $rolId) {
                 $insertarRol->execute([$usuarioNuevo, $rolId]);
             }
@@ -99,21 +100,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($nuevaClave !== '' && strlen($nuevaClave) < 8) {
                 throw new RuntimeException('La nueva clave debe tener al menos 8 caracteres.');
             }
-            $buscarUsuario = $conexion_seguridad->prepare('SELECT id FROM usuarios WHERE id = ?');
+            $buscarUsuario = $conexion_seguridad->prepare('SELECT id FROM erp_seguridad.usuarios WHERE id = ?');
             $buscarUsuario->execute([$usuarioId]);
             if (!$buscarUsuario->fetchColumn()) {
                 throw new RuntimeException('El usuario que intentas editar ya no existe.');
             }
-            $buscarUsername = $conexion_seguridad->prepare('SELECT id FROM usuarios WHERE username = ? AND id <> ?');
+            $buscarUsername = $conexion_seguridad->prepare('SELECT id FROM erp_seguridad.usuarios WHERE username = ? AND id <> ?');
             $buscarUsername->execute([$username, $usuarioId]);
             if ($buscarUsername->fetchColumn()) {
                 throw new RuntimeException('Ese nombre de usuario ya está registrado.');
             }
             if ($nuevaClave === '') {
-                $actualizarUsuario = $conexion_seguridad->prepare('UPDATE usuarios SET nombre_completo = ?, username = ?, email = ? WHERE id = ?');
+                $actualizarUsuario = $conexion_seguridad->prepare('UPDATE erp_seguridad.usuarios SET nombre_completo = ?, username = ?, email = ? WHERE id = ?');
                 $actualizarUsuario->execute([$nombre, $username, $email !== '' ? $email : null, $usuarioId]);
             } else {
-                $actualizarUsuario = $conexion_seguridad->prepare('UPDATE usuarios SET nombre_completo = ?, username = ?, email = ?, password = ? WHERE id = ?');
+                $actualizarUsuario = $conexion_seguridad->prepare('UPDATE erp_seguridad.usuarios SET nombre_completo = ?, username = ?, email = ?, password = ? WHERE id = ?');
                 $actualizarUsuario->execute([$nombre, $username, $email !== '' ? $email : null, password_hash($nuevaClave, PASSWORD_DEFAULT), $usuarioId]);
             }
             registrarLog($conexion_seguridad, $usuarioAuditoria, 'Editar datos de usuario', "Se actualizaron los datos del usuario $usuarioId.");
@@ -129,13 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($usuarioId < 1 || !$rolesSeleccionados || !in_array($estadoUsuario, ['activo', 'inactivo'], true)) {
                 throw new RuntimeException('Selecciona al menos un rol y un estado válido para el usuario.');
             }
-            $validarRoles = $conexion_seguridad->prepare('SELECT id FROM roles WHERE id IN (' . implode(',', array_fill(0, count($rolesSeleccionados), '?')) . ')');
+            $validarRoles = $conexion_seguridad->prepare('SELECT id FROM erp_seguridad.roles WHERE id IN (' . implode(',', array_fill(0, count($rolesSeleccionados), '?')) . ')');
             $validarRoles->execute($rolesSeleccionados);
             if (count($validarRoles->fetchAll(PDO::FETCH_COLUMN)) !== count($rolesSeleccionados)) {
                 throw new RuntimeException('Uno o más roles seleccionados ya no existen.');
             }
             $conexion_seguridad->beginTransaction();
-            $usuarioBloqueado = $conexion_seguridad->prepare('SELECT username FROM usuarios WHERE id = ? FOR UPDATE');
+            $usuarioBloqueado = $conexion_seguridad->prepare('SELECT username FROM erp_seguridad.usuarios WHERE id = ? FOR UPDATE');
             $usuarioBloqueado->execute([$usuarioId]);
             $usernameObjetivo = $usuarioBloqueado->fetchColumn();
             if ($usernameObjetivo === false) {
@@ -147,10 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: rbac.php');
                 exit();
             }
-            $actualizarUsuario = $conexion_seguridad->prepare('UPDATE usuarios SET rol_id = ?, estado = ? WHERE id = ?');
+            $actualizarUsuario = $conexion_seguridad->prepare('UPDATE erp_seguridad.usuarios SET rol_id = ?, estado = ? WHERE id = ?');
             $actualizarUsuario->execute([$rolesSeleccionados[0], $estadoUsuario, $usuarioId]);
-            $conexion_seguridad->prepare('DELETE FROM r_usuario_rol WHERE usuario_id = ?')->execute([$usuarioId]);
-            $insertarRol = $conexion_seguridad->prepare('INSERT INTO r_usuario_rol (usuario_id, rol_id) VALUES (?, ?)');
+            $conexion_seguridad->prepare('DELETE FROM erp_seguridad.r_usuario_rol WHERE usuario_id = ?')->execute([$usuarioId]);
+            $insertarRol = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.r_usuario_rol (usuario_id, rol_id) VALUES (?, ?)');
             foreach ($rolesSeleccionados as $rolId) {
                 $insertarRol->execute([$usuarioId, $rolId]);
             }
@@ -160,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($accion === 'eliminar_usuario') {
             $usuarioId = (int) ($_POST['usuario_id'] ?? 0);
             $conexion_seguridad->beginTransaction();
-            $usuarioBloqueado = $conexion_seguridad->prepare('SELECT username FROM usuarios WHERE id = ? FOR UPDATE');
+            $usuarioBloqueado = $conexion_seguridad->prepare('SELECT username FROM erp_seguridad.usuarios WHERE id = ? FOR UPDATE');
             $usuarioBloqueado->execute([$usuarioId]);
             $usernameObjetivo = $usuarioBloqueado->fetchColumn();
             if ($usernameObjetivo === false) {
@@ -172,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: rbac.php');
                 exit();
             }
-            $eliminar = $conexion_seguridad->prepare('DELETE FROM usuarios WHERE id = ?');
+            $eliminar = $conexion_seguridad->prepare('DELETE FROM erp_seguridad.usuarios WHERE id = ?');
             $eliminar->execute([$usuarioId]);
             if (!$eliminar->rowCount()) {
                 throw new RuntimeException('El usuario ya no existe.');
@@ -186,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($nombre === '' || !in_array($nivel, ['administrativo', 'supervision', 'operativo'], true)) {
                 throw new RuntimeException('Ingresa el nombre y selecciona un nivel de acceso válido.');
             }
-            $insertar = $conexion_seguridad->prepare('INSERT INTO roles (nombre, descripcion, nivel_acceso) VALUES (?, ?, ?)');
+            $insertar = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.roles (nombre, descripcion, nivel_acceso) VALUES (?, ?, ?)');
             $insertar->execute([$nombre, $descripcion !== '' ? $descripcion : null, $nivel]);
             registrarLog($conexion_seguridad, $usuarioAuditoria, 'Crear rol', "Se creó el rol $nombre.");
             $_SESSION['flash_rbac'] = 'Rol creado correctamente.';
@@ -203,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($rolId < 1 || $nombre === '' || !in_array($nivel, ['administrativo', 'operativo', 'supervision'], true) || !in_array($estadoRol, ['activo', 'inactivo'], true)) {
                 throw new RuntimeException('Completa el nombre del rol y selecciona un nivel y estado válidos.');
             }
-            $actualizar = $conexion_seguridad->prepare('UPDATE roles SET nombre = ?, descripcion = ?, nivel_acceso = ?, estado = ? WHERE id = ?');
+            $actualizar = $conexion_seguridad->prepare('UPDATE erp_seguridad.roles SET nombre = ?, descripcion = ?, nivel_acceso = ?, estado = ? WHERE id = ?');
             $actualizar->execute([$nombre, $descripcion !== '' ? $descripcion : null, $nivel, $estadoRol, $rolId]);
             $_SESSION['flash_rbac'] = 'Rol actualizado correctamente.';
         } elseif ($accion === 'eliminar_rol') {
@@ -211,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (in_array($rolId, $rolesBase, true)) {
                 throw new RuntimeException('Los roles base del sistema no se pueden eliminar.');
             }
-            $eliminar = $conexion_seguridad->prepare('DELETE FROM roles WHERE id = ?');
+            $eliminar = $conexion_seguridad->prepare('DELETE FROM erp_seguridad.roles WHERE id = ?');
             $eliminar->execute([$rolId]);
             if (!$eliminar->rowCount()) {
                 throw new RuntimeException('El rol personalizado ya no existe.');
@@ -222,10 +223,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 http_response_code(403);
                 throw new RuntimeException('Solo el Administrador puede cambiar la matriz de permisos.');
             }
-            $rolesDb = $conexion_seguridad->query('SELECT id FROM roles')->fetchAll(PDO::FETCH_COLUMN);
-            $modulosDb = $conexion_seguridad->query('SELECT id FROM modulo')->fetchAll(PDO::FETCH_COLUMN);
+            $rolesDb = $conexion_seguridad->query('SELECT id FROM erp_seguridad.roles')->fetchAll(PDO::FETCH_COLUMN);
+            $modulosDb = $conexion_seguridad->query('SELECT id FROM erp_seguridad.modulos')->fetchAll(PDO::FETCH_COLUMN);
             $permisosPost = $_POST['permisos'] ?? [];
-            $guardarPermiso = $conexion_seguridad->prepare('INSERT INTO r_modulo_rol (rol_id, modulo_id, habilitado) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE habilitado = VALUES(habilitado)');
+            $guardarPermiso = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.r_modulo_rol (rol_id, modulo_id, habilitado) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE habilitado = VALUES(habilitado)');
             $conexion_seguridad->beginTransaction();
             foreach ($rolesDb as $rolId) {
                 foreach ($modulosDb as $moduloId) {
@@ -256,10 +257,10 @@ $flash = $_SESSION['flash_rbac'] ?? '';
 $flashError = $_SESSION['flash_rbac_error'] ?? '';
 unset($_SESSION['flash_rbac']);
 unset($_SESSION['flash_rbac_error']);
-$roles = $conexion_seguridad->query('SELECT id, nombre, descripcion, nivel_acceso, estado FROM roles ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
-$usuarios = $conexion_seguridad->query('SELECT u.id, u.username, u.nombre_completo, u.email, u.rol_id, u.estado, r.nombre AS rol_principal FROM usuarios u LEFT JOIN roles r ON r.id = u.rol_id ORDER BY u.id')->fetchAll(PDO::FETCH_ASSOC);
+$roles = $conexion_seguridad->query('SELECT id, nombre, descripcion, nivel_acceso, estado FROM erp_seguridad.roles ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
+$usuarios = $conexion_seguridad->query('SELECT usuarios.id, usuarios.username, usuarios.nombre_completo, usuarios.email, usuarios.rol_id, usuarios.estado, roles.nombre AS rol_principal FROM erp_seguridad.usuarios AS usuarios LEFT JOIN erp_seguridad.roles AS roles ON roles.id = usuarios.rol_id ORDER BY usuarios.id')->fetchAll(PDO::FETCH_ASSOC);
 $asignaciones = [];
-foreach ($conexion_seguridad->query('SELECT usuario_id, rol_id FROM r_usuario_rol') as $asignacion) {
+foreach ($conexion_seguridad->query('SELECT usuario_id, rol_id FROM erp_seguridad.r_usuario_rol') as $asignacion) {
     $asignaciones[(int) $asignacion['usuario_id']][] = (int) $asignacion['rol_id'];
 }
 foreach ($usuarios as &$usuario) {
@@ -267,9 +268,9 @@ foreach ($usuarios as &$usuario) {
     $usuario['roles_ids'] = $asignaciones[$usuarioId] ?? [(int) $usuario['rol_id']];
 }
 unset($usuario);
-$modulos = $conexion_seguridad->query('SELECT id, nombre_modulo, descripcion FROM modulo ORDER BY orden, id')->fetchAll(PDO::FETCH_ASSOC);
+$modulos = $conexion_seguridad->query('SELECT id, nombre AS nombre_modulo, descripcion FROM erp_seguridad.modulos ORDER BY orden, id')->fetchAll(PDO::FETCH_ASSOC);
 $accesos = [];
-foreach ($conexion_seguridad->query('SELECT rol_id, modulo_id, habilitado FROM r_modulo_rol') as $acceso) {
+foreach ($conexion_seguridad->query('SELECT rol_id, modulo_id, habilitado FROM erp_seguridad.r_modulo_rol') as $acceso) {
     $accesos[(int) $acceso['rol_id']][(int) $acceso['modulo_id']] = (int) $acceso['habilitado'];
 }
 foreach ($roles as $rol) {
@@ -278,7 +279,7 @@ foreach ($roles as $rol) {
         $moduloId = (int) $modulo['id'];
         if (!isset($accesos[$rolId][$moduloId])) {
             $habilitado = $rolId === 1 || ($rolId === 3 && !in_array($modulo['nombre_modulo'], ['Configuración', 'Menú y Combos'], true)) || ($rolId === 2 && in_array($modulo['nombre_modulo'], ['Punto de Venta', 'Recetas', 'Cierre de Caja', 'Reportes de Ventas'], true));
-            $insertar = $conexion_seguridad->prepare('INSERT INTO r_modulo_rol (rol_id, modulo_id, habilitado) VALUES (?, ?, ?)');
+            $insertar = $conexion_seguridad->prepare('INSERT INTO erp_seguridad.r_modulo_rol (rol_id, modulo_id, habilitado) VALUES (?, ?, ?)');
             $insertar->execute([$rolId, $moduloId, $habilitado ? 1 : 0]);
             $accesos[$rolId][$moduloId] = $habilitado ? 1 : 0;
         }

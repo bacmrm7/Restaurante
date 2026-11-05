@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
 
     if (!empty($usuario) && !empty($password)) {
-        $sql = "SELECT * FROM usuarios WHERE username = :usuario";
+        $sql = 'SELECT * FROM erp_seguridad.usuarios WHERE username = :usuario';
         $stmt = $conexion_seguridad->prepare($sql);
         $stmt->execute(['usuario' => $usuario]);
         $user = $stmt->fetch();
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
 
-            $stmtRoles = $conexion_seguridad->prepare('SELECT rol_id FROM r_usuario_rol WHERE usuario_id = ?');
+            $stmtRoles = $conexion_seguridad->prepare('SELECT rol_id FROM erp_seguridad.r_usuario_rol WHERE usuario_id = ?');
             $stmtRoles->execute([(int) $user['id']]);
             $rolesUsuario = array_map('intval', $stmtRoles->fetchAll(PDO::FETCH_COLUMN));
             if (!$rolesUsuario) {
@@ -51,23 +51,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'Menú y Combos' => 'menu.php',
                 'Cierre de Caja' => 'cierre_caja.php',
                 'Reportes de Ventas' => 'reporte_ventas.php',
-                'Gastos Operativos' => 'gastos.php',
+                'Gastos operativos' => 'gastos.php',
                 'Configuración' => 'configuracion.php',
             ];
+            $destinosPorModulo = $destinosPorModulo ?? [];
             if (in_array(1, $_SESSION['roles_ids'], true)) {
                 $destino = 'index.php';
             } else {
                 $marcadoresRoles = implode(',', array_fill(0, count($_SESSION['roles_ids']), '?'));
                 $marcadoresModulos = implode(',', array_fill(0, count($destinosPorModulo), '?'));
                 $consultaDestino = $conexion_seguridad->prepare(
-                    "SELECT modulo.nombre_modulo
-                     FROM modulo
-                     INNER JOIN r_modulo_rol AS permiso ON permiso.modulo_id = modulo.id
-                     WHERE permiso.rol_id IN ($marcadoresRoles)
-                       AND permiso.habilitado = 1
-                       AND modulo.nombre_modulo IN ($marcadoresModulos)
-                     GROUP BY modulo.id, modulo.nombre_modulo, modulo.orden
-                     ORDER BY modulo.orden, modulo.id
+                    "SELECT modulos.nombre
+                     FROM erp_seguridad.modulos AS modulos
+                     INNER JOIN erp_seguridad.r_modulo_rol AS accesos ON accesos.modulo_id = modulos.id
+                     WHERE accesos.rol_id IN ($marcadoresRoles)
+                       AND accesos.habilitado = 1
+                       AND modulos.nombre IN ($marcadoresModulos)
+                     GROUP BY modulos.id, modulos.nombre, modulos.orden
+                     ORDER BY modulos.orden, modulos.id
                      LIMIT 1"
                 );
                 $consultaDestino->execute(array_merge($_SESSION['roles_ids'], array_keys($destinosPorModulo)));
