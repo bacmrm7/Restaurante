@@ -17,22 +17,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Verificación de credenciales
         if ($user && ($password === $user['password'] || password_verify($password, $user['password']))) {
+            $estadoUsuario = strtolower(trim((string) ($user['estado'] ?? '')));
+            if (!in_array($estadoUsuario, ['1', 'activo'], true)) {
+                $_SESSION = [];
+                if (ini_get('session.use_cookies')) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+                }
+                session_destroy();
+                session_start();
+                $_SESSION['error_login'] = 'Su cuenta se encuentra inactiva. Contacte al administrador.';
+                header('Location: login.php');
+                exit();
+            }
+
+            $stmtRoles = $conexion_seguridad->prepare('SELECT rol_id FROM r_usuario_rol WHERE usuario_id = ?');
+            $stmtRoles->execute([(int) $user['id']]);
+            $rolesUsuario = array_map('intval', $stmtRoles->fetchAll(PDO::FETCH_COLUMN));
+            if (!$rolesUsuario) {
+                $rolesUsuario = [(int) $user['rol_id']];
+            }
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['usuario_id'] = $user['id'];
             $_SESSION['nombre_completo'] = $user['nombre_completo'] ?? $user['nombre'] ?? $user['username'];
             $_SESSION['usuario'] = $user['username'];
             $_SESSION['rol_id'] = $user['rol_id'];
+            $_SESSION['roles_ids'] = array_values(array_unique($rolesUsuario));
+
+            $destinosPorModulo = [
+                'Inventario' => 'index.php',
+                'Punto de Venta' => 'ventas.php',
+                'Recetas' => 'recetas.php',
+                'Menú y Combos' => 'menu.php',
+                'Cierre de Caja' => 'cierre_caja.php',
+                'Reportes de Ventas' => 'reporte_ventas.php',
+                'Gastos Operativos' => 'gastos.php',
+                'Configuración' => 'configuracion.php',
+            ];
+            if (in_array(1, $_SESSION['roles_ids'], true)) {
+                $destino = 'index.php';
+            } else {
+                $marcadoresRoles = implode(',', array_fill(0, count($_SESSION['roles_ids']), '?'));
+                $marcadoresModulos = implode(',', array_fill(0, count($destinosPorModulo), '?'));
+                $consultaDestino = $conexion_seguridad->prepare(
+                    "SELECT modulo.nombre_modulo
+                     FROM modulo
+                     INNER JOIN r_modulo_rol AS permiso ON permiso.modulo_id = modulo.id
+                     WHERE permiso.rol_id IN ($marcadoresRoles)
+                       AND permiso.habilitado = 1
+                       AND modulo.nombre_modulo IN ($marcadoresModulos)
+                     GROUP BY modulo.id, modulo.nombre_modulo, modulo.orden
+                     ORDER BY modulo.orden, modulo.id
+                     LIMIT 1"
+                );
+                $consultaDestino->execute(array_merge($_SESSION['roles_ids'], array_keys($destinosPorModulo)));
+                $moduloDestino = $consultaDestino->fetchColumn();
+                $destino = $moduloDestino !== false ? ($destinosPorModulo[$moduloDestino] ?? null) : null;
+            }
+
+            if ($destino === null) {
+                $_SESSION = [];
+                session_destroy();
+                session_start();
+                $_SESSION['error_login'] = 'Tu usuario no tiene módulos habilitados. Contacte al administrador.';
+                header('Location: login.php');
+                exit();
+            }
 
             if (function_exists('registrarLog')) {
                 registrarLog($conexion_seguridad, $user['id'], 'Inicio de sesión', 'Inicio de sesión exitoso al sistema');
             }
 
-            // Redirección inteligente según el rol del usuario
-            if ($_SESSION['rol_id'] == 2) {
-                header("Location: ventas.php");
-            } else {
-                header("Location: index.php");
-            }
+            header('Location: ' . $destino);
             exit();
         } else {
             $_SESSION['error_login'] = "Usuario o contraseña incorrectos.";
@@ -101,8 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
         }
         .login-card #usuario, .login-card #password { padding-left: 52px !important; padding-inline-start: 52px !important; text-indent: 0 !important; }
+        .login-card #password { padding-right: 50px !important; }
         .login-input-wrap:hover input { border-color: #aab9ad !important; }
         .login-input-wrap:focus-within .login-input-icon { color: #28714d; }
+        .login-card .login-password-toggle { position: absolute; z-index: 2; top: 50%; right: 8px; display: grid; width: 34px !important; min-width: 34px; height: 34px; min-height: 34px; place-items: center; padding: 0 !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; color: #748078 !important; box-shadow: none !important; cursor: pointer; transform: translateY(-50%); }
+        .login-card .login-password-toggle:hover { background: #edf2ed !important; color: var(--login-forest) !important; box-shadow: none !important; transform: translateY(-50%); }
+        .login-card .login-password-toggle:focus-visible { outline: 2px solid #28714d !important; outline-offset: 1px; }
+        .login-card .login-password-toggle svg { width: 18px; height: 18px; }
         .login-card .login-input-wrap input:focus, .login-card .login-input-wrap input:focus-visible {
             border-color: #28714d !important;
             background: #fff !important;
@@ -172,6 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="login-input-wrap">
                     <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/><path d="M12 14v3"/></svg>
                     <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <button class="login-password-toggle" id="toggle-password" type="button" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar u ocultar contraseña">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
                 </div>
             </div>
             <button class="login-submit" type="submit">
@@ -181,5 +245,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
       </section>
     </main>
+    <script>
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('toggle-password');
+
+        passwordToggle.addEventListener('click', () => {
+            const mostrar = passwordInput.type === 'password';
+            passwordInput.type = mostrar ? 'text' : 'password';
+            passwordToggle.setAttribute('aria-pressed', String(mostrar));
+            passwordToggle.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        });
+    </script>
 </body>
 </html>

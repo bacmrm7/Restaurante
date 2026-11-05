@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/seguridad.php';
-requerirRol([1]); // Administrador
+requerirRol([]);
 include __DIR__ . '/config/conexion.php';
 
 // Consultar combos directamente desde el catálogo de menú.

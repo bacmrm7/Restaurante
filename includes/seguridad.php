@@ -18,15 +18,66 @@ function requerirAutenticacion() {
     }
 }
 
+function tiene_permiso(string $nombreModulo): bool {
+    $rolesUsuario = array_values(array_unique(array_map('intval', array_merge($_SESSION['roles_ids'] ?? [], [(int) ($_SESSION['rol_id'] ?? 0)]))));
+    $rolesUsuario = array_values(array_filter($rolesUsuario, static fn (int $rolId): bool => $rolId > 0));
+    if (!$rolesUsuario) {
+        return false;
+    }
+    if (in_array(1, $rolesUsuario, true)) {
+        return true;
+    }
+
+    $db = $GLOBALS['conexion_seguridad'] ?? null;
+    if (!$db instanceof PDO) {
+        require_once dirname(__DIR__) . '/config/conexion.php';
+        $db = $GLOBALS['conexion_seguridad'] ?? null;
+    }
+    if (!$db instanceof PDO) {
+        return false;
+    }
+
+    $marcadores = implode(',', array_fill(0, count($rolesUsuario), '?'));
+    $consultaAcceso = $db->prepare("SELECT COALESCE(MAX(acceso.habilitado), 0) FROM modulo AS modulo LEFT JOIN r_modulo_rol AS acceso ON acceso.modulo_id = modulo.id AND acceso.rol_id IN ($marcadores) WHERE modulo.nombre_modulo = ?");
+    $consultaAcceso->execute(array_merge($rolesUsuario, [$nombreModulo]));
+    return (bool) $consultaAcceso->fetchColumn();
+}
+
 // 2. Verifica si el rol del usuario tiene permiso para acceder
 function requerirRol($roles_permitidos = []) {
     global $ruta_base;
     requerirAutenticacion();
-    
-    // Obtener el rol de la sesión actual
-    $rol_actual = $_SESSION['rol_id'] ?? null;
-    
-    if (!in_array($rol_actual, $roles_permitidos)) {
+    global $conexion, $conexion_seguridad;
+
+    $roles_usuario = array_values(array_unique(array_map('intval', array_merge($_SESSION['roles_ids'] ?? [], [(int) ($_SESSION['rol_id'] ?? 0)]))));
+    $roles_permitidos = array_map('intval', (array) $roles_permitidos);
+    $autorizado = (bool) array_intersect($roles_usuario, $roles_permitidos);
+    $modulos_por_ruta = [
+        'index.php' => 'Inventario',
+        'registrar_producto.php' => 'Inventario',
+        'editar_producto.php' => 'Inventario',
+        'eliminar_producto.php' => 'Inventario',
+        'ventas.php' => 'Punto de Venta',
+        'procesar_venta.php' => 'Punto de Venta',
+        'recetas.php' => 'Recetas',
+        'menu.php' => 'Menú y Combos',
+        'cierre_caja.php' => 'Cierre de Caja',
+        'reporte_ventas.php' => 'Reportes de Ventas',
+        'gastos.php' => 'Gastos operativos',
+        'configuracion.php' => 'Configuración',
+    ];
+    $ruta_actual = basename($_SERVER['PHP_SELF'] ?? '');
+
+    if (isset($modulos_por_ruta[$ruta_actual])) {
+        try {
+            $permisoModulo = tiene_permiso($modulos_por_ruta[$ruta_actual]);
+            $autorizado = in_array(1, $roles_usuario, true) || $permisoModulo;
+        } catch (Throwable $exception) {
+            $autorizado = false;
+        }
+    }
+
+    if (!$autorizado) {
         http_response_code(403);
         echo "<!DOCTYPE html>
         <html lang='es'>

@@ -1,4 +1,11 @@
 <?php
+
+if (isset($GLOBALS['conexion_seguridad']) && $GLOBALS['conexion_seguridad'] instanceof PDO) {
+    $conexion = $GLOBALS['conexion'] ?? null;
+    $conexion_seguridad = $GLOBALS['conexion_seguridad'];
+    return;
+}
+
 date_default_timezone_set('America/Caracas');
 
 $host = '127.0.0.1';
@@ -18,14 +25,18 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Función para auditoría de eventos en la base de datos de seguridad
-function registrarLog($conexion_seguridad, $usuario_id, $accion, $detalles = null) {
-    try {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $stmt = $conexion_seguridad->prepare("INSERT INTO logs_auditoria (usuario_id, accion, detalles, ip_origen) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$usuario_id, $accion, $detalles, $ip]);
-    } catch (Exception $e) {
-        // Manejo silencioso o log de errores
+$GLOBALS['conexion'] = $conexion;
+$GLOBALS['conexion_seguridad'] = $conexion_seguridad;
+
+if (!function_exists('registrarLog')) {
+    function registrarLog($conexion_seguridad, $usuario_id, $accion, $detalles = null) {
+        try {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $stmt = $conexion_seguridad->prepare("INSERT INTO logs_auditoria (usuario_id, accion, detalles, ip_origen) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$usuario_id, $accion, $detalles, $ip]);
+        } catch (Exception $e) {
+            // Manejo silencioso o log de errores
+        }
     }
 }
 ?>

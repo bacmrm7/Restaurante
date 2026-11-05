@@ -4,6 +4,16 @@ requerirRol([1, 3]); // Administrador y Supervisor de solo lectura
 include __DIR__ . '/config/conexion.php';
 $rol_actual = (int) ($_SESSION['rol_id'] ?? 0);
 $es_admin = $rol_actual === 1;
+$permisos_nav = [
+    'Inventario' => tiene_permiso('Inventario'),
+    'Recetas' => tiene_permiso('Recetas'),
+    'Menú y Combos' => tiene_permiso('Menú y Combos'),
+    'Punto de Venta' => tiene_permiso('Punto de Venta'),
+    'Gastos operativos' => tiene_permiso('Gastos operativos'),
+    'Cierre de Caja' => tiene_permiso('Cierre de Caja'),
+    'Reportes de Ventas' => tiene_permiso('Reportes de Ventas'),
+    'Configuración' => tiene_permiso('Configuración'),
+];
 
 // Consultar insumos y materias primas para el inventario general.
 $sql = "SELECT p.*, c.nombre AS categoria_nombre 
@@ -151,28 +161,26 @@ foreach ($productos as $producto) {
 
         <span class="nav-label">Panel</span>
         <nav class="side-nav">
-                    <a class="side-link active" href="index.php" aria-current="page" title="Consultar el inventario general"><span class="nav-mark">IN</span>Inventario</a>
-                    <?php if ($es_admin): ?>
-                        <a class="side-link" href="registrar_producto.php" title="Registrar un nuevo insumo"><span class="nav-mark">+</span>Nuevo insumo</a>
-                        <a class="side-link" href="recetas.php" title="Consultar y gestionar recetas"><span class="nav-mark">RE</span>Recetas</a>
+                    <?php if ($permisos_nav['Inventario']): ?><a class="side-link active" href="index.php" aria-current="page" title="Consultar el inventario general"><span class="nav-mark">IN</span>Inventario</a><?php endif; ?>
+                    <?php if ($permisos_nav['Recetas']): ?><a class="side-link" href="recetas.php" title="Consultar recetas"><span class="nav-mark">RE</span>Recetas</a><?php endif; ?>
+                    <?php if ($permisos_nav['Inventario']): ?><a class="side-link" href="registrar_producto.php" title="Registrar un nuevo insumo"><span class="nav-mark">+</span>Nuevo insumo</a><?php endif; ?>
+                    <?php if ($permisos_nav['Menú y Combos']): ?>
                         <a class="side-link" href="menu.php" title="Ver el menú y administrar combos"><span class="nav-mark">ME</span>Menú y combos</a>
-                    <?php else: ?>
-                        <a class="side-link" href="recetas.php" title="Consultar y operar recetas"><span class="nav-mark">RE</span>Recetas</a>
                     <?php endif; ?>
         </nav>
 
         <span class="nav-label">Operaciones</span>
         <nav class="side-nav">
-                    <a class="side-link" href="ventas.php" title="Registrar ventas en el punto de venta"><span class="nav-mark">PV</span>Punto de venta</a>
-                    <?php if ($es_admin): ?><a class="side-link" href="gastos.php" title="Consultar y registrar gastos operativos"><span class="nav-mark">GA</span>Gastos operativos</a><?php endif; ?>
-                    <a class="side-link" href="cierre_caja.php" title="Consultar y consolidar cierres de caja"><span class="nav-mark">CJ</span>Cierre de caja</a>
-                    <a class="side-link" href="reporte_ventas.php" title="Consultar el historial de ventas"><span class="nav-mark">RV</span>Reporte de ventas</a>
+                    <?php if ($permisos_nav['Punto de Venta']): ?><a class="side-link" href="ventas.php" title="Registrar ventas en el punto de venta"><span class="nav-mark">PV</span>Punto de venta</a><?php endif; ?>
+                    <?php if ($permisos_nav['Gastos operativos']): ?><a class="side-link" href="gastos.php" title="Consultar y registrar gastos operativos"><span class="nav-mark">GA</span>Gastos operativos</a><?php endif; ?>
+                    <?php if ($permisos_nav['Cierre de Caja']): ?><a class="side-link" href="cierre_caja.php" title="Consultar y consolidar cierres de caja"><span class="nav-mark">CJ</span>Cierre de caja</a><?php endif; ?>
+                    <?php if ($permisos_nav['Reportes de Ventas']): ?><a class="side-link" href="reporte_ventas.php" title="Consultar el historial de ventas"><span class="nav-mark">RV</span>Reporte de ventas</a><?php endif; ?>
         </nav>
 
         <div class="sidebar-bottom">
             <nav class="side-nav">
+                    <?php if ($permisos_nav['Configuración']): ?><a class="side-link" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a><?php endif; ?>
                     <?php if ($es_admin): ?>
-                        <a class="side-link" href="configuracion.php" title="Administrar configuración y respaldos"><span class="nav-mark">CO</span>Configuración</a>
                         <a class="side-link" href="control_accesos.php" title="Consultar roles y permisos"><span class="nav-mark">RB</span>Control de Accesos</a>
                     <?php endif; ?>
                     <a class="side-link logout" href="controllers/logout.php" title="Cerrar la sesión actual"><span class="nav-mark">↗</span>Cerrar sesión</a>
